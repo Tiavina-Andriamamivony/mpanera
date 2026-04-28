@@ -16,8 +16,8 @@ import type {
 } from "@/lib/generated/prisma/client";
 
 export const userIds = {
-  client: "11111111-1111-1111-1111-111111111111",
-  provider: "22222222-2222-2222-2222-222222222222",
+  client: "11111111-1111-4111-8111-111111111111",
+  provider: "22222222-2222-4222-8222-222222222222",
 };
 
 export const clientUser: User = {
@@ -45,7 +45,7 @@ export const providerUser: User = {
 };
 
 export const clientProfile: Client = {
-  id: "c0000000-0000-0000-0000-000000000001",
+  id: "33333333-3333-4333-8333-333333333333",
   userId: userIds.client,
   firstName: "Hery",
   lastName: "Rakoto",
@@ -55,7 +55,7 @@ export const clientProfile: Client = {
 };
 
 export const providerProfile: Provider = {
-  id: "p0000000-0000-0000-0000-000000000001",
+  id: "44444444-4444-4444-8444-444444444444",
   userId: userIds.provider,
   fullName: "Naina Plomberie",
   companyName: "Naina SARL",
@@ -72,7 +72,7 @@ export const providerProfile: Provider = {
 };
 
 export const category: Category = {
-  id: "cat00000-0000-0000-0000-000000000001",
+  id: "55555555-5555-4555-8555-555555555555",
   parentId: null,
   name: "Plomberie",
   slug: "plomberie",
@@ -80,7 +80,7 @@ export const category: Category = {
 };
 
 export const serviceRequest: ServiceRequest = {
-  id: "sr000000-0000-0000-0000-000000000001",
+  id: "66666666-6666-4666-8666-666666666666",
   clientId: clientProfile.id,
   categoryId: category.id,
   title: "Fuite robinet cuisine",
@@ -94,14 +94,14 @@ export const serviceRequest: ServiceRequest = {
 };
 
 export const serviceRequestPhoto: ServiceRequestPhoto = {
-  id: "ph000000-0000-0000-0000-000000000001",
+  id: "77777777-7777-4777-8777-777777777777",
   serviceRequestId: serviceRequest.id,
   fileUrl: "/uploads/photo.jpg",
   order: 0,
 };
 
 export const notification: Notification = {
-  id: "n0000000-0000-0000-0000-000000000001",
+  id: "88888888-8888-4888-8888-888888888888",
   serviceRequestId: serviceRequest.id,
   providerId: providerProfile.id,
   status: "SENT",
@@ -110,7 +110,7 @@ export const notification: Notification = {
 };
 
 export const offer: Offer = {
-  id: "of000000-0000-0000-0000-000000000001",
+  id: "99999999-9999-4999-8999-999999999999",
   notificationId: notification.id,
   serviceRequestId: serviceRequest.id,
   providerId: providerProfile.id,
@@ -121,7 +121,7 @@ export const offer: Offer = {
 };
 
 export const job: Job = {
-  id: "jb000000-0000-0000-0000-000000000001",
+  id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   serviceRequestId: serviceRequest.id,
   clientId: clientProfile.id,
   providerId: providerProfile.id,
@@ -135,7 +135,7 @@ export const job: Job = {
 };
 
 export const payment: Payment = {
-  id: "pm000000-0000-0000-0000-000000000001",
+  id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
   jobId: job.id,
   clientId: clientProfile.id,
   amount: offer.proposedPrice,
@@ -147,7 +147,7 @@ export const payment: Payment = {
 };
 
 export const verificationDocument: VerificationDocument = {
-  id: "vd000000-0000-0000-0000-000000000001",
+  id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
   providerId: providerProfile.id,
   type: "ID_CARD_FRONT",
   fileUrl: "/uploads/id-front.jpg",
@@ -161,7 +161,7 @@ export const verificationDocument: VerificationDocument = {
 };
 
 export const updateReminder: UpdateReminder = {
-  id: "rm000000-0000-0000-0000-000000000001",
+  id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
   providerId: providerProfile.id,
   status: "SENT",
   sentAt: new Date("2026-04-15T00:00:00Z"),
@@ -170,7 +170,7 @@ export const updateReminder: UpdateReminder = {
 };
 
 export const review: Review = {
-  id: "rv000000-0000-0000-0000-000000000001",
+  id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
   jobId: job.id,
   clientId: clientProfile.id,
   providerId: providerProfile.id,

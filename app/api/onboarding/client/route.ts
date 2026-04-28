@@ -20,5 +20,5 @@ export async function POST(req: Request) {
     where: { id: user.id },
     data: { onboardingComplete: true },
   });
-  return NextResponse.json(client);
+  return NextResponse.json(client, { status: 201 });
 }

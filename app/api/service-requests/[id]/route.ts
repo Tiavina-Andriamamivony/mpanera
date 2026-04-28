@@ -29,7 +29,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getAuthUser(req);
-  if (!user || !user.client) return unauthorized();
+  if (!user) return unauthorized();
+  if (!user.client) return forbidden("Only clients can edit service requests");
   const { id } = await params;
 
   const sr = await prisma.serviceRequest.findUnique({ where: { id } });
@@ -52,7 +53,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getAuthUser(req);
-  if (!user || !user.client) return unauthorized();
+  if (!user) return unauthorized();
+  if (!user.client) return forbidden("Only clients can close service requests");
   const { id } = await params;
   const sr = await prisma.serviceRequest.findUnique({ where: { id } });
   if (!sr) return notFound("ServiceRequest");

@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-export const uuid = z.string().uuid();
+export const uuid = z
+  .string()
+  .regex(
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+    "Invalid UUID",
+  );
 
 export const pagination = z.object({
   page: z.coerce.number().int().min(1).default(1),

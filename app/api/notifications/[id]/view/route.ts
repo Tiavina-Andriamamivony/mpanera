@@ -8,7 +8,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getAuthUser(req);
-  if (!user || !user.provider) return unauthorized();
+  if (!user) return unauthorized();
+  if (!user.provider) return forbidden("Only providers can view notifications");
   const { id } = await params;
 
   const notification = await prisma.notification.findUnique({ where: { id } });

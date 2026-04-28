@@ -7,7 +7,8 @@ import { verificationDocTypeSchema } from "@/lib/validation";
 
 export async function GET(req: Request) {
   const user = await getAuthUser(req);
-  if (!user || !user.provider) return unauthorized();
+  if (!user) return unauthorized();
+  if (!user.provider) return forbidden("Caller is not a provider");
 
   const docs = await prisma.verificationDocument.findMany({
     where: { providerId: user.provider.id },

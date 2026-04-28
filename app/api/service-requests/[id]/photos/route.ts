@@ -9,7 +9,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getAuthUser(req);
-  if (!user || !user.client) return unauthorized();
+  if (!user) return unauthorized();
+  if (!user.client) return forbidden("Only clients can upload photos");
   const { id } = await params;
 
   const sr = await prisma.serviceRequest.findUnique({ where: { id } });
