@@ -8,7 +8,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getAuthUser(req);
-  if (!user || !user.provider) return unauthorized();
+  if (!user) return unauthorized();
+  if (!user.provider) return forbidden("Only providers can confirm reminders");
   const { id } = await params;
 
   const reminder = await prisma.updateReminder.findUnique({ where: { id } });

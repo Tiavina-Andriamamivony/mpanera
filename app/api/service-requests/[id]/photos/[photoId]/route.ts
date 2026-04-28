@@ -8,7 +8,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; photoId: string }> },
 ) {
   const user = await getAuthUser(req);
-  if (!user || !user.client) return unauthorized();
+  if (!user) return unauthorized();
+  if (!user.client) return forbidden("Only clients can remove photos");
   const { id, photoId } = await params;
 
   const photo = await prisma.serviceRequestPhoto.findUnique({

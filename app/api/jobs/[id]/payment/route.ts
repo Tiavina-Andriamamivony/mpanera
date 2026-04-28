@@ -10,7 +10,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getAuthUser(req);
-  if (!user || !user.client) return unauthorized();
+  if (!user) return unauthorized();
+  if (!user.client) return forbidden("Only clients can initiate payments");
   const { id } = await params;
 
   const job = await prisma.job.findUnique({ where: { id }, include: { payment: true } });

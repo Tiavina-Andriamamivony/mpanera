@@ -9,7 +9,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getAuthUser(req);
-  if (!user || !user.client) return unauthorized();
+  if (!user) return unauthorized();
+  if (!user.client) return forbidden("Only clients can list offers");
   const { id } = await params;
 
   const sr = await prisma.serviceRequest.findUnique({ where: { id } });
@@ -29,7 +30,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getAuthUser(req);
-  if (!user || !user.provider) return unauthorized();
+  if (!user) return unauthorized();
+  if (!user.provider) return forbidden("Only providers can create offers");
   const { id } = await params;
 
   const result = await parseJson(req, createOfferSchema);

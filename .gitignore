@@ -40,4 +40,9 @@ next-env.d.ts
 /lib/generated
 /app/generated/prisma
 
+<<<<<<< HEAD
 *-lock.yaml
+=======
+# clerk configuration (can include secrets)
+/.clerk/
+>>>>>>> 4b23ec6 (feat: api-tests)
