@@ -5,8 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-inter);
-  --font-inter: var(--font-inter);
+  --font-heading: var(--font-display);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+  --font-inter: var(--font-body);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -128,6 +131,195 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-inter;
+    font-family: var(--font-body);
   }
 }
+
+/* ─── Mpanera landing — immersive system ────────────────────────────── */
+
+@theme inline {
+  --color-clay: #da904c;
+  --color-mustard: #ceb868;
+  --color-olive: #6b6e50;
+  --color-bone: #f4ecd8;
+  --color-ink: #1c1a14;
+}
+
+:root {
+  --mp-clay: #da904c;
+  --mp-mustard: #ceb868;
+  --mp-olive: #6b6e50;
+  --mp-bone: #f4ecd8;
+  --mp-cream: #faf5e6;
+  --mp-ink: #1c1a14;
+  --mp-paper: #efe6cf;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "ss01", "ss02", "liga", "dlig";
+  font-variation-settings: "SOFT" 30, "WONK" 1, "opsz" 144;
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Grain overlay used on hero & sections */
+.mp-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/></svg>");
+  mix-blend-mode: multiply;
+  opacity: 0.35;
+  z-index: 1;
+}
+
+/* Curtain reveal — blocks the page until loader finishes */
+@keyframes mp-curtain-up {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-101%);
+  }
+}
+@keyframes mp-curtain-down {
+  0% {
+    transform: translateY(-101%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes mp-fill {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes mp-stamp {
+  0% {
+    transform: scale(0.4) rotate(-12deg);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  60% {
+    transform: scale(1.06) rotate(-3deg);
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: scale(1) rotate(-3deg);
+    opacity: 1;
+  }
+}
+
+@keyframes mp-rise {
+  0% {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mp-rise-soft {
+  0% {
+    transform: translateY(28px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mp-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes mp-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes mp-blink {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  61%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes mp-trail {
+  0% {
+    stroke-dashoffset: 1200;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes mp-ping-soft {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+/* Smoothing — wood grain background */
+.mp-wood {
+  background:
+    radial-gradient(
+      120% 80% at 20% 0%,
+      rgba(218, 144, 76, 0.18) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      80% 60% at 100% 100%,
+      rgba(107, 110, 80, 0.25) 0%,
+      transparent 70%
+    ),
+    repeating-linear-gradient(
+      4deg,
+      rgba(28, 26, 20, 0) 0px,
+      rgba(28, 26, 20, 0) 14px,
+      rgba(28, 26, 20, 0.04) 15px,
+      rgba(28, 26, 20, 0) 16px
+    ),
+    var(--mp-cream);
+}
+

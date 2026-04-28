@@ -1,16 +1,31 @@
 import type { Metadata } from "next"
 import { ClerkProvider } from "@clerk/nextjs"
-import { Inter } from "next/font/google"
+import { Fraunces, DM_Sans, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 
-const inter = Inter({
-  variable: "--font-inter",
+const fraunces = Fraunces({
+  variable: "--font-display",
   subsets: ["latin"],
+  axes: ["SOFT", "WONK", "opsz"],
+  display: "swap",
+})
+
+const dmSans = DM_Sans({
+  variable: "--font-body",
+  subsets: ["latin"],
+  display: "swap",
+})
+
+const jetbrains = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  display: "swap",
 })
 
 export const metadata: Metadata = {
-  title: "Mpanera",
-  description: "Plateforme de services locaux Mpanera",
+  title: "Mpanera — L'art du service à Madagascar",
+  description:
+    "La place de marché qui relie les artisans et les clients à travers Madagascar.",
 }
 
 export default function RootLayout({
@@ -20,10 +35,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className={`${inter.variable} h-screen font-inter antialiased`}>
-        <ClerkProvider>
-          {children}
-        </ClerkProvider>
+      <body
+        className={`${fraunces.variable} ${dmSans.variable} ${jetbrains.variable} h-screen font-body antialiased`}
+      >
+        <ClerkProvider>{children}</ClerkProvider>
       </body>
     </html>
   )
