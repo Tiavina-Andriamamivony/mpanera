@@ -1,0 +1,1778 @@
+openapi: 3.1.0
+info:
+  title: Mpanera API
+  version: 0.1.0
+  description: |
+    REST API for the Mpanera marketplace — connecting clients with local
+    service providers in Madagascar (plumbing, electrical, cleaning, etc.).
+
+    Authentication uses bearer JWT tokens. Endpoints are scoped to the
+    authenticated user's role (`CLIENT` or `PROVIDER`). Some endpoints
+    require completed onboarding.
+  contact:
+    name: Mpanera Team
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://api.mpanera.mg
+    description: Production
+
+tags:
+  - name: Auth
+    description: Registration, login, token refresh
+  - name: Users
+    description: Current user profile
+  - name: Onboarding
+    description: Complete client or provider profile after registration
+  - name: Categories
+    description: Service category catalogue
+  - name: Providers
+    description: Search and view provider profiles
+  - name: ServiceRequests
+    description: Client-side service requests (formerly "appels")
+  - name: Notifications
+    description: Provider-side notifications when matched to a request
+  - name: Offers
+    description: Provider responses to service requests
+  - name: Jobs
+    description: Confirmed work between client and provider
+  - name: Payments
+    description: Payment initiation and provider webhooks
+  - name: Verification
+    description: Provider identity verification documents
+  - name: Reminders
+    description: Periodic provider contact-info refresh reminders
+  - name: Reviews
+    description: Post-job ratings
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ---------------------------------------------------------------- Auth
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate with email or phone + password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Exchange a refresh token for a new access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        "200":
+          description: New tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Invalidate the current refresh token
+      responses:
+        "204":
+          description: Logged out
+
+  # ---------------------------------------------------------------- Me
+  /me:
+    get:
+      tags: [Users]
+      summary: Get the authenticated user with role-specific profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      tags: [Users]
+      summary: Update authenticated user account fields (email, phone, password)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # ---------------------------------------------------------------- Onboarding
+  /onboarding/client:
+    post:
+      tags: [Onboarding]
+      summary: Complete the client profile (only for users with role CLIENT)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteClientOnboardingRequest"
+      responses:
+        "200":
+          description: Onboarded client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /onboarding/provider:
+    post:
+      tags: [Onboarding]
+      summary: Complete the provider profile (only for users with role PROVIDER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteProviderOnboardingRequest"
+      responses:
+        "200":
+          description: Onboarded provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Provider"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  # ---------------------------------------------------------------- Categories
+  /categories:
+    get:
+      tags: [Categories]
+      summary: List all categories
+      security: []
+      parameters:
+        - in: query
+          name: parentId
+          schema:
+            type: string
+            format: uuid
+          description: Restrict to children of a given category
+        - in: query
+          name: rootOnly
+          schema:
+            type: boolean
+          description: Return only top-level categories
+      responses:
+        "200":
+          description: Category list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+
+  /categories/{slug}:
+    get:
+      tags: [Categories]
+      summary: Get a category by slug
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/SlugPath"
+      responses:
+        "200":
+          description: Category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ---------------------------------------------------------------- Providers
+  /providers:
+    get:
+      tags: [Providers]
+      summary: Search providers
+      security: []
+      parameters:
+        - in: query
+          name: categoryId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: city
+          schema:
+            type: string
+        - in: query
+          name: district
+          schema:
+            type: string
+        - in: query
+          name: verified
+          schema:
+            type: boolean
+        - in: query
+          name: minRating
+          schema:
+            type: number
+            minimum: 0
+            maximum: 5
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+      responses:
+        "200":
+          description: Paginated list of providers
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/ProviderSearchItem"
+
+  /providers/{id}:
+    get:
+      tags: [Providers]
+      summary: Get a provider profile (with reviews and categories)
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Provider profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderProfile"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /providers/me/categories:
+    put:
+      tags: [Providers]
+      summary: Replace the authenticated provider's category list
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [categoryIds]
+              properties:
+                categoryIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  minItems: 1
+      responses:
+        "200":
+          description: Updated provider profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Provider"
+
+  # ---------------------------------------------------------------- ServiceRequests
+  /service-requests:
+    get:
+      tags: [ServiceRequests]
+      summary: List service requests (scope depends on caller role)
+      description: |
+        - `CLIENT` callers see their own requests.
+        - `PROVIDER` callers see requests they were notified about, optionally filtered by `status`.
+        - Each item includes its category plus lightweight counters used by the request-tracking UI.
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/ServiceRequestStatus"
+        - in: query
+          name: categoryId
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+      responses:
+        "200":
+          description: Paginated list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/ServiceRequestListItem"
+    post:
+      tags: [ServiceRequests]
+      summary: Create a new service request (CLIENT only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceRequestBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequest"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /service-requests/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [ServiceRequests]
+      summary: Get a service request
+      responses:
+        "200":
+          description: Service request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequestWithRelations"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [ServiceRequests]
+      summary: Update a service request (CLIENT, only while status=OPEN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateServiceRequestBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequest"
+    delete:
+      tags: [ServiceRequests]
+      summary: Close a service request (CLIENT)
+      responses:
+        "204":
+          description: Closed
+
+  /service-requests/{id}/photos:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    post:
+      tags: [ServiceRequests]
+      summary: Add a photo to a service request
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                order:
+                  type: integer
+                  minimum: 0
+      responses:
+        "201":
+          description: Created photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequestPhoto"
+
+  /service-requests/{id}/photos/{photoId}:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+      - in: path
+        name: photoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      tags: [ServiceRequests]
+      summary: Remove a photo from a service request
+      responses:
+        "204":
+          description: Removed
+
+  # ---------------------------------------------------------------- Notifications
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List the provider's notifications
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/NotificationStatus"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+      responses:
+        "200":
+          description: Paginated notifications
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/NotificationWithRequest"
+
+  /notifications/{id}/view:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    patch:
+      tags: [Notifications]
+      summary: Mark a notification as viewed
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  # ---------------------------------------------------------------- Offers
+  /service-requests/{id}/offers:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [Offers]
+      summary: List offers on a service request (CLIENT)
+      responses:
+        "200":
+          description: Offers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OfferWithProvider"
+    post:
+      tags: [Offers]
+      summary: Submit an offer for a service request (PROVIDER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOfferBody"
+      responses:
+        "201":
+          description: Offer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+
+  /offers/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [Offers]
+      summary: Get an offer
+      responses:
+        "200":
+          description: Offer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferWithProvider"
+    patch:
+      tags: [Offers]
+      summary: Update an offer (PROVIDER, only while status=PENDING)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOfferBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+
+  /offers/{id}/accept:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    post:
+      tags: [Offers]
+      summary: Accept an offer (CLIENT) — creates a Job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [chosenSlotStart, chosenSlotEnd]
+              properties:
+                chosenSlotStart:
+                  type: string
+                  format: date-time
+                chosenSlotEnd:
+                  type: string
+                  format: date-time
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /offers/{id}/refuse:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    post:
+      tags: [Offers]
+      summary: Refuse an offer (CLIENT)
+      responses:
+        "200":
+          description: Updated offer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+
+  /offers/{id}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    post:
+      tags: [Offers]
+      summary: Withdraw an offer (PROVIDER)
+      responses:
+        "200":
+          description: Updated offer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+
+  # ---------------------------------------------------------------- Jobs
+  /jobs:
+    get:
+      tags: [Jobs]
+      summary: List jobs visible to the caller
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/JobStatus"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+      responses:
+        "200":
+          description: Paginated jobs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Job"
+
+  /jobs/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [Jobs]
+      summary: Get a job
+      responses:
+        "200":
+          description: Job with relations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobWithRelations"
+
+  /jobs/{id}/status:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    patch:
+      tags: [Jobs]
+      summary: Transition a job to a new status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: "#/components/schemas/JobStatus"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  # ---------------------------------------------------------------- Payments
+  /jobs/{id}/payment:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    post:
+      tags: [Payments]
+      summary: Initiate a payment for a job (CLIENT)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [method]
+              properties:
+                method:
+                  $ref: "#/components/schemas/PaymentMethod"
+      responses:
+        "201":
+          description: Payment initiated — returns a redirect or USSD instructions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Payment"
+                  - type: object
+                    properties:
+                      redirectUrl:
+                        type: string
+                        format: uri
+                        nullable: true
+                      instructions:
+                        type: string
+                        nullable: true
+
+  /payments/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [Payments]
+      summary: Get a payment
+      responses:
+        "200":
+          description: Payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /payments/webhook:
+    post:
+      tags: [Payments]
+      summary: Webhook endpoint for payment providers
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Acknowledged
+
+  # ---------------------------------------------------------------- Verification
+  /verification/documents:
+    get:
+      tags: [Verification]
+      summary: List the authenticated provider's verification documents
+      responses:
+        "200":
+          description: Documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VerificationDocument"
+    post:
+      tags: [Verification]
+      summary: Upload a verification document
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [type, file]
+              properties:
+                type:
+                  $ref: "#/components/schemas/VerificationDocumentType"
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationDocument"
+
+  # ---------------------------------------------------------------- Reminders
+  /reminders/{id}/confirm:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    post:
+      tags: [Reminders]
+      summary: Confirm a contact-update reminder (PROVIDER)
+      responses:
+        "200":
+          description: Confirmed reminder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateReminder"
+
+  # ---------------------------------------------------------------- Reviews
+  /jobs/{id}/review:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    post:
+      tags: [Reviews]
+      summary: Leave a review on a completed job (CLIENT)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewBody"
+      responses:
+        "201":
+          description: Created review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+
+  /providers/{id}/reviews:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [Reviews]
+      summary: List a provider's published reviews
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+      responses:
+        "200":
+          description: Paginated reviews
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Review"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdPath:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SlugPath:
+      in: path
+      name: slug
+      required: true
+      schema:
+        type: string
+    Page:
+      in: query
+      name: page
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PerPage:
+      in: query
+      name: perPage
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Caller does not have permission for this resource
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Resource state conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Request body failed validation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationErrorResponse"
+
+  schemas:
+    # ---------- Enums ----------
+    UserRole:
+      type: string
+      enum: [CLIENT, PROVIDER]
+
+    ServiceRequestStatus:
+      type: string
+      enum: [OPEN, NEGOTIATING, ASSIGNED, CLOSED, EXPIRED]
+
+    NotificationStatus:
+      type: string
+      enum: [SENT, VIEWED, RESPONDED, IGNORED]
+
+    OfferStatus:
+      type: string
+      enum: [PENDING, ACCEPTED, REFUSED, WITHDRAWN]
+
+    JobStatus:
+      type: string
+      enum: [AWAITING_PAYMENT, PAID, IN_PROGRESS, COMPLETED, CANCELLED, DISPUTED]
+
+    PaymentMethod:
+      type: string
+      enum: [MVOLA, ORANGE_MONEY, AIRTEL_MONEY, CARD]
+
+    PaymentStatus:
+      type: string
+      enum: [PENDING, SUCCESS, FAILED, REFUNDED]
+
+    VerificationDocumentType:
+      type: string
+      enum: [ID_CARD_FRONT, ID_CARD_BACK, FACE_PHOTO, OTHER]
+
+    VerificationDocumentStatus:
+      type: string
+      enum: [PENDING, VALIDATED, REJECTED]
+
+    UpdateReminderStatus:
+      type: string
+      enum: [SENT, CONFIRMED, EXPIRED]
+
+    # ---------- Core entities ----------
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - phone
+        - role
+        - onboardingComplete
+        - active
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+        onboardingComplete:
+          type: boolean
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Client:
+      type: object
+      required: [id, userId, firstName, lastName]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        district:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        neighborhood:
+          type: string
+          nullable: true
+
+    Provider:
+      type: object
+      required:
+        - id
+        - userId
+        - fullName
+        - averageRating
+        - completedJobsCount
+        - verified
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+        companyName:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        district:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        neighborhood:
+          type: string
+          nullable: true
+        averageRating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        completedJobsCount:
+          type: integer
+          minimum: 0
+        verified:
+          type: boolean
+        contactUpdatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        nextContactReminderAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ProviderProfile:
+      allOf:
+        - $ref: "#/components/schemas/Provider"
+        - type: object
+          properties:
+            categories:
+              type: array
+              items:
+                $ref: "#/components/schemas/Category"
+            reviews:
+              type: array
+              items:
+                $ref: "#/components/schemas/Review"
+
+    ProviderSearchItem:
+      allOf:
+        - $ref: "#/components/schemas/Provider"
+        - type: object
+          required: [categories]
+          properties:
+            categories:
+              type: array
+              items:
+                $ref: "#/components/schemas/Category"
+
+    Category:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id:
+          type: string
+          format: uuid
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        slug:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/Category"
+
+    ServiceRequest:
+      type: object
+      required:
+        - id
+        - clientId
+        - categoryId
+        - title
+        - description
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        district:
+          type: string
+          nullable: true
+        indicativeBudget:
+          type: number
+          nullable: true
+        desiredDeadline:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: "#/components/schemas/ServiceRequestStatus"
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    ServiceRequestWithRelations:
+      allOf:
+        - $ref: "#/components/schemas/ServiceRequest"
+        - type: object
+          properties:
+            client:
+              $ref: "#/components/schemas/Client"
+            category:
+              $ref: "#/components/schemas/Category"
+            photos:
+              type: array
+              items:
+                $ref: "#/components/schemas/ServiceRequestPhoto"
+            offers:
+              type: array
+              items:
+                $ref: "#/components/schemas/Offer"
+
+    ServiceRequestListItem:
+      allOf:
+        - $ref: "#/components/schemas/ServiceRequest"
+        - type: object
+          required: [category, _count]
+          properties:
+            category:
+              $ref: "#/components/schemas/Category"
+            _count:
+              type: object
+              required: [notifications, offers, photos]
+              properties:
+                notifications:
+                  type: integer
+                  minimum: 0
+                offers:
+                  type: integer
+                  minimum: 0
+                photos:
+                  type: integer
+                  minimum: 0
+
+    ServiceRequestPhoto:
+      type: object
+      required: [id, serviceRequestId, fileUrl, order]
+      properties:
+        id:
+          type: string
+          format: uuid
+        serviceRequestId:
+          type: string
+          format: uuid
+        fileUrl:
+          type: string
+          format: uri
+        order:
+          type: integer
+          minimum: 0
+
+    Notification:
+      type: object
+      required: [id, serviceRequestId, providerId, status, sentAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        serviceRequestId:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/NotificationStatus"
+        sentAt:
+          type: string
+          format: date-time
+        viewedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    NotificationWithRequest:
+      allOf:
+        - $ref: "#/components/schemas/Notification"
+        - type: object
+          properties:
+            serviceRequest:
+              $ref: "#/components/schemas/ServiceRequest"
+
+    Offer:
+      type: object
+      required:
+        - id
+        - notificationId
+        - serviceRequestId
+        - providerId
+        - proposedPrice
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        notificationId:
+          type: string
+          format: uuid
+        serviceRequestId:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        proposedPrice:
+          type: number
+        message:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/OfferStatus"
+        createdAt:
+          type: string
+          format: date-time
+        proposedSlots:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProposedTimeSlot"
+
+    OfferWithProvider:
+      allOf:
+        - $ref: "#/components/schemas/Offer"
+        - type: object
+          properties:
+            provider:
+              $ref: "#/components/schemas/Provider"
+
+    ProposedTimeSlot:
+      type: object
+      required: [id, offerId, start, end]
+      properties:
+        id:
+          type: string
+          format: uuid
+        offerId:
+          type: string
+          format: uuid
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+
+    Job:
+      type: object
+      required:
+        - id
+        - serviceRequestId
+        - clientId
+        - providerId
+        - acceptedOfferId
+        - finalPrice
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        serviceRequestId:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        acceptedOfferId:
+          type: string
+          format: uuid
+        finalPrice:
+          type: number
+        chosenSlotStart:
+          type: string
+          format: date-time
+          nullable: true
+        chosenSlotEnd:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: "#/components/schemas/JobStatus"
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    JobWithRelations:
+      allOf:
+        - $ref: "#/components/schemas/Job"
+        - type: object
+          properties:
+            client:
+              $ref: "#/components/schemas/Client"
+            provider:
+              $ref: "#/components/schemas/Provider"
+            serviceRequest:
+              $ref: "#/components/schemas/ServiceRequest"
+            acceptedOffer:
+              $ref: "#/components/schemas/Offer"
+            payment:
+              oneOf:
+                - $ref: "#/components/schemas/Payment"
+                - type: "null"
+            review:
+              oneOf:
+                - $ref: "#/components/schemas/Review"
+                - type: "null"
+
+    Payment:
+      type: object
+      required:
+        - id
+        - jobId
+        - clientId
+        - amount
+        - method
+        - apiReference
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        jobId:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        method:
+          $ref: "#/components/schemas/PaymentMethod"
+        apiReference:
+          type: string
+        status:
+          $ref: "#/components/schemas/PaymentStatus"
+        rawPayload:
+          type: string
+          nullable: true
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    VerificationDocument:
+      type: object
+      required:
+        - id
+        - providerId
+        - type
+        - fileUrl
+        - status
+        - autoCheckPass
+        - submittedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/VerificationDocumentType"
+        fileUrl:
+          type: string
+          format: uri
+        autoCheckPass:
+          type: boolean
+        autoCheckLog:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/VerificationDocumentStatus"
+        rejectionReason:
+          type: string
+          nullable: true
+        reviewedById:
+          type: string
+          format: uuid
+          nullable: true
+        submittedAt:
+          type: string
+          format: date-time
+        reviewedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdateReminder:
+      type: object
+      required: [id, providerId, status, sentAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/UpdateReminderStatus"
+        sentAt:
+          type: string
+          format: date-time
+        confirmedAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Review:
+      type: object
+      required: [id, jobId, clientId, providerId, rating, published, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        jobId:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          nullable: true
+        published:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Me:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            client:
+              oneOf:
+                - $ref: "#/components/schemas/Client"
+                - type: "null"
+            provider:
+              oneOf:
+                - $ref: "#/components/schemas/Provider"
+                - type: "null"
+
+    # ---------- Auth bodies ----------
+    RegisterRequest:
+      type: object
+      required: [email, phone, password, role]
+      properties:
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        role:
+          $ref: "#/components/schemas/UserRole"
+
+    LoginRequest:
+      type: object
+      required: [password]
+      properties:
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [accessToken, refreshToken, user]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+
+    # ---------- Onboarding bodies ----------
+    CompleteClientOnboardingRequest:
+      type: object
+      required: [firstName, lastName]
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        district:
+          type: string
+        city:
+          type: string
+        neighborhood:
+          type: string
+
+    CompleteProviderOnboardingRequest:
+      type: object
+      required: [fullName, categoryIds]
+      properties:
+        fullName:
+          type: string
+        companyName:
+          type: string
+        bio:
+          type: string
+        district:
+          type: string
+        city:
+          type: string
+        neighborhood:
+          type: string
+        categoryIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+
+    # ---------- Service request bodies ----------
+    CreateServiceRequestBody:
+      type: object
+      required: [categoryId, title, description]
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 120
+        description:
+          type: string
+        district:
+          type: string
+        indicativeBudget:
+          type: number
+          minimum: 0
+        desiredDeadline:
+          type: string
+          format: date
+
+    UpdateServiceRequestBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        district:
+          type: string
+        indicativeBudget:
+          type: number
+        desiredDeadline:
+          type: string
+          format: date
+
+    # ---------- Offer bodies ----------
+    CreateOfferBody:
+      type: object
+      required: [proposedPrice, slots]
+      properties:
+        proposedPrice:
+          type: number
+          minimum: 0
+        message:
+          type: string
+        slots:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [start, end]
+            properties:
+              start:
+                type: string
+                format: date-time
+              end:
+                type: string
+                format: date-time
+
+    UpdateOfferBody:
+      type: object
+      properties:
+        proposedPrice:
+          type: number
+          minimum: 0
+        message:
+          type: string
+        slots:
+          type: array
+          items:
+            type: object
+            required: [start, end]
+            properties:
+              start:
+                type: string
+                format: date-time
+              end:
+                type: string
+                format: date-time
+
+    # ---------- Review body ----------
+    CreateReviewBody:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    # ---------- Pagination & errors ----------
+    PaginatedEnvelope:
+      type: object
+      required: [page, perPage, total]
+      properties:
+        page:
+          type: integer
+        perPage:
+          type: integer
+        total:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    ValidationErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, fields]
+          properties:
+            code:
+              type: string
+              const: VALIDATION_ERROR
+            message:
+              type: string
+            fields:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string

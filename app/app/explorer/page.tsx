@@ -1,7 +1,7 @@
 "use client"
 
 import { useDeferredValue, useEffect, useMemo, useState } from "react"
-import { Loader, MapPin, Search, Users } from "lucide-react"
+import { MapPin, Search, Users } from "lucide-react"
 
 import {
   ActionLink,
@@ -22,8 +22,7 @@ import {
 } from "@/components/ui/input-group"
 import { Button } from "@/components/ui/button"
 import { categoriesService, providersService } from "@/lib/services"
-import type { CategoryWithChildren } from "@/types/api"
-import type { Provider } from "@/lib/generated/prisma/client"
+import type { CategoryWithChildren, ProviderSearchItem } from "@/types/api"
 
 function flattenCategories(
   categories: CategoryWithChildren[]
@@ -43,7 +42,7 @@ function getProviderInitials(fullName: string) {
     .join("")
 }
 
-function mapProviderToListItem(provider: Provider): ProviderListItem {
+function mapProviderToListItem(provider: ProviderSearchItem): ProviderListItem {
   return {
     id: provider.id,
     fullName: provider.fullName,
@@ -57,7 +56,10 @@ function mapProviderToListItem(provider: Provider): ProviderListItem {
     responseTime: null,
     indicativePrice: null,
     photoInitials: getProviderInitials(provider.fullName),
-    categories: [],
+    categories: provider.categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+    })),
   }
 }
 
@@ -65,7 +67,7 @@ export default function ExplorerPage() {
   const [query, setQuery] = useState("")
   const [district, setDistrict] = useState("")
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
-  const [providers, setProviders] = useState<Provider[]>([])
+  const [providers, setProviders] = useState<ProviderSearchItem[]>([])
   const [categories, setCategories] = useState<CategoryWithChildren[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -254,10 +256,7 @@ export default function ExplorerPage() {
             />
             {error ? (
               <div className="rounded-lg border border-dashed border-destructive/30 px-4 py-8 text-sm text-destructive">
-                <div className="flex flex-col items-center gap-2">
-                  <Loader className="animate-spin" />
-                  <span className="text-desctructive">Veuillez patienter...</span>
-                </div>
+                {error}
               </div>
             ) : loading ? (
               <div className="rounded-lg border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">

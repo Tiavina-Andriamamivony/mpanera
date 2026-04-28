@@ -29,6 +29,16 @@ export async function GET(req: Request) {
       skip: (page - 1) * perPage,
       take: perPage,
       orderBy: { createdAt: "desc" },
+      include: {
+        category: true,
+        _count: {
+          select: {
+            notifications: true,
+            offers: true,
+            photos: true,
+          },
+        },
+      },
     }),
     prisma.serviceRequest.count({ where }),
   ]);

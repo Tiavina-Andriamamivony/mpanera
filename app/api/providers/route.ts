@@ -22,8 +22,19 @@ export async function GET(req: Request) {
       skip: (page - 1) * perPage,
       take: perPage,
       orderBy: [{ verified: "desc" }, { averageRating: "desc" }],
+      include: {
+        categories: { include: { category: true } },
+      },
     }),
     prisma.provider.count({ where }),
   ]);
-  return NextResponse.json({ data, page, perPage, total });
+  return NextResponse.json({
+    data: data.map((provider) => ({
+      ...provider,
+      categories: provider.categories.map((providerCategory) => providerCategory.category),
+    })),
+    page,
+    perPage,
+    total,
+  });
 }

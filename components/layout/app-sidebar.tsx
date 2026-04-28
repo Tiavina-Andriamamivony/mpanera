@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { Button } from "../ui/button"
+import Image from "next/image"
 
 const mainNav = [
   { title: "Explorer", url: "/app/explorer", icon: Compass },
@@ -68,7 +69,18 @@ export function AppSidebar() {
           href="/app/explorer"
           className="flex items-center gap-3 rounded-xl px-2 py-2 text-sidebar-foreground"
         >
-          <div
+          <Image
+            src="/images/logo.png"
+            className={cn([
+              "flex size-9 items-center justify-center rounded-lg",
+              isExpanded ? "" : "",
+            ])}
+            alt="logo"
+            width={40}
+            height={40}
+            loading="lazy"
+          />
+          {/* <div
             className={cn([
               "flex size-9 items-center justify-center rounded-lg",
               isExpanded
@@ -77,7 +89,7 @@ export function AppSidebar() {
             ])}
           >
             M
-          </div>
+          </div> */}
           {isExpanded ? (
             <div className="flex min-w-0 flex-col">
               <Logo />
@@ -87,24 +99,6 @@ export function AppSidebar() {
             </div>
           ) : null}
         </Link>
-
-        {/* {isExpanded ? (
-          <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/35 p-3">
-            <p className="text-xs uppercase tracking-[0.24em] text-sidebar-foreground/55">
-              Zone active
-            </p>
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-sidebar-foreground">Analakely</p>
-                <p className="mt-1 text-xs text-sidebar-foreground/65">
-                  128 prestataires autour de vous
-                </p>
-              </div>
-              <MapPin className="size-4 text-sidebar-foreground/60" />
-            </div>
-            <SidebarInput className="mt-3 bg-background" placeholder="Rechercher un service" />
-          </div>
-        ) : null} */}
       </SidebarHeader>
 
       <SidebarContent>

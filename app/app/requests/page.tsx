@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { CheckCircle2, Clock3, Loader, Send, XCircle } from "lucide-react"
+import { CheckCircle2, Clock3, Send, XCircle } from "lucide-react"
 
 import {
   ActionLink,
@@ -24,14 +24,12 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { categoriesService, serviceRequestsService } from "@/lib/services"
-import {
-  type Category,
-  type ServiceRequest,
-} from "@/lib/generated/prisma/client"
+import { type Category } from "@/lib/generated/prisma/client"
 import { MOCK_CATEGORIES } from "@/lib/mock-categories"
 import type {
   CategoryWithChildren,
   CreateServiceRequestBody,
+  ServiceRequestListItem,
 } from "@/types/api"
 
 const SERVICE_REQUEST_STATUS = {
@@ -144,7 +142,7 @@ function buildRequestBody(form: RequestFormState): {
 }
 
 export default function RequestsPage() {
-  const [requests, setRequests] = useState<ServiceRequest[]>([])
+  const [requests, setRequests] = useState<ServiceRequestListItem[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -175,9 +173,7 @@ export default function RequestsPage() {
 
         const flatCategories = flattenCategories(categoriesResponse)
         const availableCategories =
-          flatCategories.length > 0
-            ? flatCategories
-            : [...MOCK_CATEGORIES]
+          flatCategories.length > 0 ? flatCategories : [...MOCK_CATEGORIES]
         setRequests(requestsResponse.data)
         setCategories(availableCategories)
         setForm((current) => ({
@@ -247,7 +243,29 @@ export default function RequestsPage() {
     try {
       console.info("Creating service request with body:", body)
       const createdRequest = await serviceRequestsService.create(body)
-      setRequests((current) => [createdRequest, ...current])
+      const selectedCategory =
+        categories.find(
+          (category) => category.id === createdRequest.categoryId
+        ) ??
+        ({
+          id: createdRequest.categoryId,
+          parentId: null,
+          name: "Categorie inconnue",
+          slug: "categorie-inconnue",
+          icon: null,
+        } as Category)
+      setRequests((current) => [
+        {
+          ...createdRequest,
+          category: selectedCategory,
+          _count: {
+            notifications: 0,
+            offers: 0,
+            photos: 0,
+          },
+        },
+        ...current,
+      ])
       setForm((current) => ({
         ...current,
         title: "",
@@ -271,7 +289,11 @@ export default function RequestsPage() {
         eyebrow=""
         title="Demandes de service"
         description=""
-        actions={<ActionLink href="/app/explorer">Retour a l&apos;exploration</ActionLink>}
+        actions={
+          <ActionLink href="/app/explorer">
+            Retour a l&apos;exploration
+          </ActionLink>
+        }
       />
 
       <PageBody className="space-y-8">
@@ -388,19 +410,20 @@ export default function RequestsPage() {
                   <div>
                     <p className="font-medium">Envoi automatique</p>
                     <p className="text-sm text-muted-foreground">
-                      Une fois creee, la demande est envoyee automatiquement
-                      aux prestataires verifies correspondant a la categorie et
-                      au district selectionnes.
+                      Une fois creee, la demande est envoyee automatiquement aux
+                      prestataires verifies correspondant a la categorie et au
+                      district selectionnes.
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Aucune selection manuelle de prestataire n&apos;est necessaire
-                      dans ce parcours MVP.
+                      Aucune selection manuelle de prestataire n&apos;est
+                      necessaire dans ce parcours MVP.
                     </p>
                     {categories.some((category) =>
                       MOCK_CATEGORIES.some((mock) => mock.id === category.id)
                     ) ? (
                       <p className="mt-1 text-xs text-amber-600">
-                        Des categories fictives sont actuellement chargees pour la selection.
+                        Des categories fictives sont actuellement chargees pour
+                        la selection.
                       </p>
                     ) : null}
                   </div>
@@ -433,20 +456,14 @@ export default function RequestsPage() {
               </Button>
             </form>
           </Surface>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-[1.45fr_0.95fr]">
           <Surface className="space-y-4">
             <SectionTitle
               title="Suivi des demandes"
               description="Le client peut voir les reponses, les offres acceptees et les demandes fermees."
             />
             {error ? (
-              <div className="rounded-lg border border-dashed border-destructive/30 px-4 py-4 text-sm text-destructive/50">
-                <div className="flex flex-col items-center gap-2">
-                  <Loader className="animate-spin" />
-                  <span className="text-desctructive">Veuillez patienter...</span>
-                </div>
+              <div className="rounded-lg border border-dashed border-destructive/30 px-4 py-4 text-sm text-destructive">
+                Aucune demande disponible pour le moment.
               </div>
             ) : null}
             <Tabs defaultValue="all" className="w-full">
@@ -469,11 +486,6 @@ export default function RequestsPage() {
                     items.map((request) => {
                       const meta = statusMeta[request.status]
                       const Icon = meta.icon
-                        const categoryName =
-                          categories.find(
-                            (category) => category.id === request.categoryId
-                        )?.name || "Categorie inconnue"
-
                       return (
                         <article
                           key={request.id}
@@ -495,9 +507,30 @@ export default function RequestsPage() {
                                   {request.description}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                  {categoryName} a{" "}
+                                  {request.category.name} a{" "}
                                   {request.district || "zone non precisee"}
                                 </p>
+                                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                                  <Tag>
+                                    {request._count.notifications} prestataire
+                                    {request._count.notifications > 1
+                                      ? "s notifies"
+                                      : " notifie"}
+                                  </Tag>
+                                  <Tag>
+                                    {request._count.offers} reponse
+                                    {request._count.offers > 1 ? "s" : ""}
+                                  </Tag>
+                                  {request.indicativeBudget ? (
+                                    <Tag>
+                                      Budget:{" "}
+                                      {new Intl.NumberFormat("fr-FR").format(
+                                        Number(request.indicativeBudget)
+                                      )}{" "}
+                                      Ar
+                                    </Tag>
+                                  ) : null}
+                                </div>
                               </div>
                             </div>
                             <div className="space-y-2 text-sm text-muted-foreground lg:max-w-64">
@@ -526,7 +559,9 @@ export default function RequestsPage() {
               ))}
             </Tabs>
           </Surface>
+        </div>
 
+        {/* <div className="grid gap-4 xl:grid-cols-[1.45fr_0.95fr]">
           <Surface className="space-y-4">
             <SectionTitle
               title="Parcours MVP"
@@ -544,7 +579,8 @@ export default function RequestsPage() {
                 <p className="font-medium">2. Diffusion</p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
                   L&apos;API diffuse maintenant la demande automatiquement aux
-                  prestataires verifies correspondant a la categorie et au district.
+                  prestataires verifies correspondant a la categorie et au
+                  district.
                 </p>
               </div>
               <div className="rounded-lg border border-border/70 px-4 py-4">
@@ -556,7 +592,7 @@ export default function RequestsPage() {
               </div>
             </div>
           </Surface>
-        </div>
+        </div> */}
       </PageBody>
     </div>
   )

@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import type {
   CreateServiceRequestBody,
   Paginated,
+  ServiceRequestListItem,
   ServiceRequestListParams,
   ServiceRequestWithRelations,
   UpdateServiceRequestBody,
@@ -11,7 +12,7 @@ import type { ServiceRequest, ServiceRequestPhoto } from "@/lib/generated/prisma
 
 export const serviceRequestsService = {
   list: (params?: ServiceRequestListParams) =>
-    api.get<Paginated<ServiceRequest>>("/service-requests", { params }),
+    api.get<Paginated<ServiceRequestListItem>>("/service-requests", { params }),
   create: (body: CreateServiceRequestBody) =>
     api.post<ServiceRequest>("/service-requests", body),
   get: (id: string) => api.get<ServiceRequestWithRelations>(`/service-requests/${id}`),

@@ -1,13 +1,15 @@
-export { authService } from "./auth";
-export { usersService } from "./users";
-export { onboardingService } from "./onboarding";
-export { categoriesService } from "./categories";
-export { providersService } from "./providers";
-export { serviceRequestsService } from "./service-requests";
-export { notificationsService } from "./notifications";
-export { offersService } from "./offers";
-export { jobsService } from "./jobs";
-export { paymentsService } from "./payments";
-export { verificationService } from "./verification";
-export { remindersService } from "./reminders";
-export { reviewsService } from "./reviews";
+export {
+  authService,
+  usersService,
+  onboardingService,
+  categoriesService,
+  providersService,
+  serviceRequestsService,
+  notificationsService,
+  offersService,
+  jobsService,
+  paymentsService,
+  verificationService,
+  remindersService,
+  reviewsService,
+} from "@/lib/mocks/services";

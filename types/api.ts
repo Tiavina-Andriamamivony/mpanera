@@ -10,7 +10,6 @@ import type {
   Review,
   ServiceRequest,
   ServiceRequestPhoto,
-  UpdateReminder,
   User,
   UserRole,
   VerificationDocument,
@@ -125,6 +124,10 @@ export interface ProviderSearchParams extends PaginationParams {
   minRating?: number;
 }
 
+export type ProviderSearchItem = Provider & {
+  categories: Category[];
+};
+
 export type ProviderProfile = Provider & {
   categories: Category[];
   reviews: Review[];
@@ -139,6 +142,15 @@ export interface ServiceRequestListParams extends PaginationParams {
   status?: ServiceRequestStatus;
   categoryId?: string;
 }
+
+export type ServiceRequestListItem = ServiceRequest & {
+  category: Category;
+  _count: {
+    notifications: number;
+    offers: number;
+    photos: number;
+  };
+};
 
 export interface CreateServiceRequestBody {
   categoryId: string;
