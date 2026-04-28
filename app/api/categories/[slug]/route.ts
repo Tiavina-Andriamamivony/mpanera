@@ -11,6 +11,6 @@ export async function GET(
     where: { slug },
     include: { children: true, parent: true },
   });
-  if (!category) return notFound("Category");
+  if (!category) return notFound("Categorie");
   return NextResponse.json(category);
 }

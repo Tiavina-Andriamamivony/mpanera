@@ -20,17 +20,17 @@ export async function PATCH(req: Request) {
 
   if (newPassword) {
     if (!currentPassword || !(await verifyPassword(currentPassword, user.passwordHash))) {
-      return errorResponse(401, "INVALID_CREDENTIALS", "Current password is incorrect");
+      return errorResponse(401, "INVALID_CREDENTIALS", "Le mot de passe actuel est incorrect");
     }
   }
 
   if (email && email !== user.email) {
     const taken = await prisma.user.findUnique({ where: { email } });
-    if (taken) return conflict("Email already in use");
+    if (taken) return conflict("Cette adresse email est deja utilisee");
   }
   if (phone && phone !== user.phone) {
     const taken = await prisma.user.findUnique({ where: { phone } });
-    if (taken) return conflict("Phone already in use");
+    if (taken) return conflict("Ce numero de telephone est deja utilise");
   }
 
   const updated = await prisma.user.update({

@@ -21,7 +21,7 @@ export const loginSchema = z
     phone: z.string().optional(),
     password: z.string().min(1),
   })
-  .refine((d) => !!d.email || !!d.phone, { message: "email or phone required" });
+  .refine((d) => !!d.email || !!d.phone, { message: "email ou telephone obligatoire" });
 
 export const refreshSchema = z.object({ refreshToken: z.string().min(1) });
 
@@ -130,7 +130,7 @@ export const acceptOfferSchema = z
     chosenSlotEnd: z.coerce.date(),
   })
   .refine((d) => d.chosenSlotEnd > d.chosenSlotStart, {
-    message: "chosenSlotEnd must be after chosenSlotStart",
+    message: "chosenSlotEnd doit etre posterieur a chosenSlotStart",
   });
 
 // jobs

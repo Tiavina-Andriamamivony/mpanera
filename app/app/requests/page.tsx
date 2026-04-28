@@ -11,10 +11,6 @@ import {
   Surface,
   Tag,
 } from "@/components/features/app/page-primitives"
-import {
-  ProviderList,
-  type ProviderListItem,
-} from "@/components/features/providers/provider-list"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -27,16 +23,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import {
-  categoriesService,
-  providersService,
-  serviceRequestsService,
-} from "@/lib/services"
+import { categoriesService, serviceRequestsService } from "@/lib/services"
 import {
   type Category,
-  type Provider,
   type ServiceRequest,
 } from "@/lib/generated/prisma/client"
+import { MOCK_CATEGORIES } from "@/lib/mock-categories"
 import type {
   CategoryWithChildren,
   CreateServiceRequestBody,
@@ -52,29 +44,29 @@ const SERVICE_REQUEST_STATUS = {
 
 const statusMeta = {
   [SERVICE_REQUEST_STATUS.OPEN]: {
-    label: "Pending",
+    label: "En attente",
     icon: Clock3,
-    tone: "Providers were notified and replies are pending.",
+    tone: "Les prestataires ont ete notifies et les reponses sont en attente.",
   },
   [SERVICE_REQUEST_STATUS.NEGOTIATING]: {
-    label: "Replies received",
+    label: "Reponses recues",
     icon: Send,
-    tone: "At least one proposal has already come back.",
+    tone: "Au moins une proposition a deja ete recue.",
   },
   [SERVICE_REQUEST_STATUS.ASSIGNED]: {
-    label: "Accepted",
+    label: "Acceptee",
     icon: CheckCircle2,
-    tone: "Direct contact can now happen.",
+    tone: "Le contact direct peut maintenant avoir lieu.",
   },
   [SERVICE_REQUEST_STATUS.CLOSED]: {
-    label: "Closed",
+    label: "Fermee",
     icon: XCircle,
-    tone: "Request completed or archived.",
+    tone: "Demande terminee ou archivee.",
   },
   [SERVICE_REQUEST_STATUS.EXPIRED]: {
-    label: "Closed",
+    label: "Fermee",
     icon: XCircle,
-    tone: "Request expired without completion.",
+    tone: "La demande a expire sans etre finalisee.",
   },
 } as const
 
@@ -100,38 +92,60 @@ function flattenCategories(categories: CategoryWithChildren[]): Category[] {
   ])
 }
 
-function getProviderInitials(fullName: string) {
-  return fullName
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("")
-}
+function buildRequestBody(form: RequestFormState): {
+  body: CreateServiceRequestBody | null
+  errors: string[]
+} {
+  const title = form.title.trim()
+  const description = form.description.trim()
+  const district = form.district.trim()
+  const budget = form.budget.trim()
 
-function mapProviderToListItem(provider: Provider): ProviderListItem {
+  const errors: string[] = []
+
+  if (!form.categoryId) errors.push("La categorie est obligatoire.")
+  if (title.length === 0) errors.push("Le titre est obligatoire.")
+  if (description.length === 0) errors.push("La description est obligatoire.")
+  if (district.length === 0) errors.push("Le district est obligatoire.")
+
+  let indicativeBudget: number | undefined
+  if (budget.length > 0) {
+    indicativeBudget = Number(budget)
+    if (!Number.isFinite(indicativeBudget) || indicativeBudget < 0) {
+      errors.push("Le budget doit etre un nombre positif.")
+    }
+  }
+
+  let desiredDeadline: string | undefined
+  if (form.desiredDeadline) {
+    const parsedDeadline = new Date(form.desiredDeadline)
+    if (Number.isNaN(parsedDeadline.getTime())) {
+      errors.push("L'echeance est invalide.")
+    } else {
+      desiredDeadline = form.desiredDeadline
+    }
+  }
+
+  if (errors.length > 0) {
+    return { body: null, errors }
+  }
+
   return {
-    id: provider.id,
-    fullName: provider.fullName,
-    companyName: provider.companyName,
-    bio: provider.bio,
-    neighborhood: provider.neighborhood,
-    city: provider.city,
-    averageRating: provider.averageRating,
-    completedJobsCount: provider.completedJobsCount,
-    verified: provider.verified,
-    responseTime: null,
-    indicativePrice: null,
-    photoInitials: getProviderInitials(provider.fullName),
-    categories: [],
+    body: {
+      categoryId: form.categoryId,
+      title,
+      description,
+      district,
+      indicativeBudget,
+      desiredDeadline,
+    },
+    errors,
   }
 }
 
 export default function RequestsPage() {
   const [requests, setRequests] = useState<ServiceRequest[]>([])
-  const [providers, setProviders] = useState<Provider[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [selectedProviderIds, setSelectedProviderIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -152,27 +166,36 @@ export default function RequestsPage() {
       setError(null)
 
       try {
-        const [requestsResponse, providersResponse, categoriesResponse] =
-          await Promise.all([
-            serviceRequestsService.list(),
-            providersService.search(),
-            categoriesService.list(),
-          ])
+        const [requestsResponse, categoriesResponse] = await Promise.all([
+          serviceRequestsService.list(),
+          categoriesService.list(),
+        ])
 
         if (cancelled) return
 
         const flatCategories = flattenCategories(categoriesResponse)
+        const availableCategories =
+          flatCategories.length > 0
+            ? flatCategories
+            : [...MOCK_CATEGORIES]
         setRequests(requestsResponse.data)
-        setProviders(providersResponse.data)
-        setCategories(flatCategories)
+        setCategories(availableCategories)
         setForm((current) => ({
           ...current,
-          categoryId: current.categoryId || flatCategories[0]?.id || "",
+          categoryId: current.categoryId || availableCategories[0]?.id || "",
         }))
       } catch (err) {
         if (cancelled) return
+        setRequests([])
+        setCategories(MOCK_CATEGORIES as Category[])
+        setForm((current) => ({
+          ...current,
+          categoryId: current.categoryId || MOCK_CATEGORIES[0]?.id || "",
+        }))
         setError(
-          err instanceof Error ? err.message : "Failed to load request data."
+          err instanceof Error
+            ? `${err.message} Chargement des categories fictives en secours.`
+            : "Impossible de charger les donnees des demandes. Chargement des categories fictives en secours."
         )
       } finally {
         if (!cancelled) setLoading(false)
@@ -185,12 +208,6 @@ export default function RequestsPage() {
       cancelled = true
     }
   }, [])
-
-  const selectedProviders = useMemo(
-    () =>
-      providers.filter((provider) => selectedProviderIds.includes(provider.id)),
-    [providers, selectedProviderIds]
-  )
 
   const requestsByStatus = useMemo(
     () => ({
@@ -213,37 +230,24 @@ export default function RequestsPage() {
     [requests]
   )
 
-  function toggleProvider(providerId: string) {
-    setSelectedProviderIds((current) =>
-      current.includes(providerId)
-        ? current.filter((id) => id !== providerId)
-        : [...current, providerId]
-    )
-  }
+  const requestDraft = useMemo(() => buildRequestBody(form), [form])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const { body, errors } = requestDraft
 
-    if (selectedProviderIds.length === 0 || !form.categoryId) {
+    if (!body) {
+      setError(errors.join(" "))
       return
-    }
-
-    const body: CreateServiceRequestBody = {
-      categoryId: form.categoryId,
-      title: form.title,
-      description: form.description,
-      district: form.district,
-      indicativeBudget: form.budget ? Number(form.budget) : undefined,
-      desiredDeadline: form.desiredDeadline || undefined,
     }
 
     setSubmitting(true)
     setError(null)
 
     try {
+      console.info("Creating service request with body:", body)
       const createdRequest = await serviceRequestsService.create(body)
       setRequests((current) => [createdRequest, ...current])
-      setSelectedProviderIds([])
       setForm((current) => ({
         ...current,
         title: "",
@@ -254,7 +258,7 @@ export default function RequestsPage() {
       }))
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to create the request."
+        err instanceof Error ? err.message : "Impossible de creer la demande."
       )
     } finally {
       setSubmitting(false)
@@ -265,22 +269,22 @@ export default function RequestsPage() {
     <div className="h-full overflow-y-auto">
       <PageIntro
         eyebrow=""
-        title="Service requests"
+        title="Demandes de service"
         description=""
-        actions={<ActionLink href="/app/explorer">Back to explore</ActionLink>}
+        actions={<ActionLink href="/app/explorer">Retour a l&apos;exploration</ActionLink>}
       />
 
       <PageBody className="space-y-8">
         <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
           <Surface className="space-y-5">
             <SectionTitle
-              title="New request"
-              description="The client describes the need and then selects one or more providers."
+              title="Nouvelle demande"
+              description="Le client decrit son besoin puis selectionne un ou plusieurs prestataires."
             />
             <form className="space-y-8" onSubmit={handleSubmit}>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2 text-sm">
-                  <Label>Category</Label>
+                  <Label>Categorie</Label>
                   <Select
                     value={form.categoryId}
                     onValueChange={(value) =>
@@ -290,8 +294,8 @@ export default function RequestsPage() {
                       }))
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selectionner une categorie" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
@@ -303,7 +307,7 @@ export default function RequestsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2 text-sm">
-                  <Label>Neighborhood / district</Label>
+                  <Label>Quartier / district</Label>
                   <Input
                     value={form.district}
                     onChange={(event) =>
@@ -319,7 +323,7 @@ export default function RequestsPage() {
               </div>
 
               <div className="space-y-2 text-sm">
-                <Label>Title</Label>
+                <Label>Titre</Label>
                 <Input
                   value={form.title}
                   onChange={(event) =>
@@ -328,7 +332,7 @@ export default function RequestsPage() {
                       title: event.target.value,
                     }))
                   }
-                  placeholder="Example: Leak under kitchen sink"
+                  placeholder="Exemple : fuite sous l'evier de la cuisine"
                   required
                 />
               </div>
@@ -343,14 +347,14 @@ export default function RequestsPage() {
                       description: event.target.value,
                     }))
                   }
-                  placeholder="Describe the issue, urgency, and anything the provider should know."
+                  placeholder="Decrivez le probleme, l'urgence et toute information utile pour le prestataire."
                   required
                 />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2 text-sm">
-                  <Label>Indicative budget</Label>
+                  <Label>Budget indicatif</Label>
                   <Input
                     type="number"
                     min="0"
@@ -365,7 +369,7 @@ export default function RequestsPage() {
                   />
                 </div>
                 <div className="space-y-2 text-sm">
-                  <Label>Requested deadline</Label>
+                  <Label>Date souhaitee</Label>
                   <Input
                     type="date"
                     value={form.desiredDeadline}
@@ -382,49 +386,50 @@ export default function RequestsPage() {
               <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium">Selected providers</p>
+                    <p className="font-medium">Envoi automatique</p>
                     <p className="text-sm text-muted-foreground">
-                      {selectedProviderIds.length === 0
-                        ? "No provider selected yet."
-                        : `${selectedProviderIds.length} provider(s) selected for dispatch.`}
+                      Une fois creee, la demande est envoyee automatiquement
+                      aux prestataires verifies correspondant a la categorie et
+                      au district selectionnes.
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      The request is now created through the service layer.
-                      Multi-provider dispatch still needs a dedicated backend
-                      endpoint.
+                      Aucune selection manuelle de prestataire n&apos;est necessaire
+                      dans ce parcours MVP.
                     </p>
+                    {categories.some((category) =>
+                      MOCK_CATEGORIES.some((mock) => mock.id === category.id)
+                    ) ? (
+                      <p className="mt-1 text-xs text-amber-600">
+                        Des categories fictives sont actuellement chargees pour la selection.
+                      </p>
+                    ) : null}
                   </div>
-                  <Tag>{selectedProviderIds.length} target(s)</Tag>
+                  <Tag>Auto</Tag>
                 </div>
-                {selectedProviders.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {selectedProviders.map((provider) => (
-                      <button
-                        key={provider.id}
-                        type="button"
-                        className="inline-flex rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-background"
-                        onClick={() => toggleProvider(provider.id)}
-                      >
-                        {provider.fullName}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
               </div>
+
+              {/* <div className="rounded-xl border border-border/70 bg-background p-4">
+                <p className="font-medium">Request body preview</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  This is the payload verified before the creation request is
+                  sent.
+                </p>
+                <pre className="mt-3 overflow-x-auto rounded-lg bg-muted/40 p-3 text-xs text-foreground">
+                  {JSON.stringify(requestDraft.body, null, 2)}
+                </pre>
+                {requestDraft.errors.length > 0 ? (
+                  <p className="mt-2 text-xs text-destructive">
+                    {requestDraft.errors.join(" ")}
+                  </p>
+                ) : null}
+              </div> */}
 
               <Button
                 type="submit"
                 className="w-full"
-                disabled={
-                  submitting ||
-                  selectedProviderIds.length === 0 ||
-                  form.categoryId.length === 0 ||
-                  form.title.trim().length === 0 ||
-                  form.description.trim().length === 0 ||
-                  form.district.trim().length === 0
-                }
+                disabled={submitting || requestDraft.body === null}
               >
-                {submitting ? "Sending..." : "Create request"}
+                {submitting ? "Envoi..." : "Creer la demande"}
               </Button>
             </form>
           </Surface>
@@ -433,41 +438,41 @@ export default function RequestsPage() {
         <div className="grid gap-4 xl:grid-cols-[1.45fr_0.95fr]">
           <Surface className="space-y-4">
             <SectionTitle
-              title="Request tracking"
-              description="The client can see replies, accepted offers, and closed requests."
+              title="Suivi des demandes"
+              description="Le client peut voir les reponses, les offres acceptees et les demandes fermees."
             />
             {error ? (
-              <div className="rounded-lg border border-dashed border-destructive/30 px-4 py-4 text-sm text-destructive">
+              <div className="rounded-lg border border-dashed border-destructive/30 px-4 py-4 text-sm text-destructive/50">
                 <div className="flex flex-col items-center gap-2">
                   <Loader className="animate-spin" />
-                  <span className="text-desctructive">Error</span>
+                  <span className="text-desctructive">Veuillez patienter...</span>
                 </div>
               </div>
             ) : null}
             <Tabs defaultValue="all" className="w-full">
               <TabsList className="mb-2" variant="line">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="received">Replies received</TabsTrigger>
-                <TabsTrigger value="accepted">Accepted</TabsTrigger>
-                <TabsTrigger value="closed">Closed</TabsTrigger>
+                <TabsTrigger value="all">Toutes</TabsTrigger>
+                <TabsTrigger value="pending">En attente</TabsTrigger>
+                <TabsTrigger value="received">Reponses recues</TabsTrigger>
+                <TabsTrigger value="accepted">Acceptees</TabsTrigger>
+                <TabsTrigger value="closed">Fermees</TabsTrigger>
               </TabsList>
               {Object.entries(requestsByStatus).map(([tab, items]) => (
                 <TabsContent key={tab} className="space-y-3" value={tab}>
                   {items.length === 0 ? (
                     <div className="rounded-lg border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
                       {loading
-                        ? "Loading requests..."
-                        : "No requests in this state yet."}
+                        ? "Chargement des demandes..."
+                        : "Aucune demande dans cet etat pour le moment."}
                     </div>
                   ) : (
                     items.map((request) => {
                       const meta = statusMeta[request.status]
                       const Icon = meta.icon
-                      const categoryName =
-                        categories.find(
-                          (category) => category.id === request.categoryId
-                        )?.name || "Unknown category"
+                        const categoryName =
+                          categories.find(
+                            (category) => category.id === request.categoryId
+                        )?.name || "Categorie inconnue"
 
                       return (
                         <article
@@ -490,23 +495,23 @@ export default function RequestsPage() {
                                   {request.description}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                  {categoryName} in{" "}
-                                  {request.district || "unspecified area"}
+                                  {categoryName} a{" "}
+                                  {request.district || "zone non precisee"}
                                 </p>
                               </div>
                             </div>
                             <div className="space-y-2 text-sm text-muted-foreground lg:max-w-64">
                               <p>{meta.tone}</p>
                               <p>
-                                {new Intl.DateTimeFormat("en-US", {
+                                {new Intl.DateTimeFormat("fr-FR", {
                                   dateStyle: "medium",
                                   timeStyle: "short",
                                 }).format(new Date(request.createdAt))}
                               </p>
                               {request.desiredDeadline ? (
                                 <p>
-                                  Deadline:{" "}
-                                  {new Intl.DateTimeFormat("en-US", {
+                                  Echeance :{" "}
+                                  {new Intl.DateTimeFormat("fr-FR", {
                                     dateStyle: "medium",
                                   }).format(new Date(request.desiredDeadline))}
                                 </p>
@@ -524,29 +529,29 @@ export default function RequestsPage() {
 
           <Surface className="space-y-4">
             <SectionTitle
-              title="MVP flow"
-              description="The stages described in the README are now represented in the interface."
+              title="Parcours MVP"
+              description="Les etapes decrites dans le README sont maintenant representees dans l'interface."
             />
             <div className="space-y-4">
               <div className="rounded-lg border border-border/70 px-4 py-4">
                 <p className="font-medium">1. Creation</p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  The client fills in the category, need, location, budget, and
-                  requested date.
+                  Le client renseigne la categorie, le besoin, la localisation,
+                  le budget et la date souhaitee.
                 </p>
               </div>
               <div className="rounded-lg border border-border/70 px-4 py-4">
-                <p className="font-medium">2. Dispatch</p>
+                <p className="font-medium">2. Diffusion</p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  The request is created through the API, and provider dispatch
-                  can plug into a backend notification endpoint next.
+                  L&apos;API diffuse maintenant la demande automatiquement aux
+                  prestataires verifies correspondant a la categorie et au district.
                 </p>
               </div>
               <div className="rounded-lg border border-border/70 px-4 py-4">
                 <p className="font-medium">3. Decision</p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  Statuses then help the client track replies, accept a
-                  proposal, or close the request.
+                  Les statuts aident ensuite le client a suivre les reponses,
+                  accepter une proposition ou cloturer la demande.
                 </p>
               </div>
             </div>

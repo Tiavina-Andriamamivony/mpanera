@@ -15,11 +15,11 @@ export async function GET(
     where: { id },
     include: { job: true },
   });
-  if (!payment) return notFound("Payment");
+  if (!payment) return notFound("Paiement");
   const allowed =
     (user.client && payment.clientId === user.client.id) ||
     (user.provider && payment.job.providerId === user.provider.id);
-  if (!allowed) return forbidden("Not part of this payment");
+  if (!allowed) return forbidden("Vous ne faites pas partie de ce paiement");
 
   return NextResponse.json(payment);
 }

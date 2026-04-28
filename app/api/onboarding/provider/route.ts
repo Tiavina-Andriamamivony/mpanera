@@ -8,8 +8,8 @@ export async function POST(req: Request) {
   const user = await getAuthUser(req);
   if (!user) return unauthorized();
   if (user.role !== "PROVIDER")
-    return forbidden("Only PROVIDER users can complete provider onboarding");
-  if (user.provider) return conflict("Provider profile already exists");
+    return forbidden("Seuls les utilisateurs PROVIDER peuvent terminer l'onboarding prestataire");
+  if (user.provider) return conflict("Le profil prestataire existe deja");
 
   const result = await parseJson(req, completeProviderSchema);
   if ("response" in result) return result.response;

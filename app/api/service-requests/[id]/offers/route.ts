@@ -13,8 +13,8 @@ export async function GET(
   const { id } = await params;
 
   const sr = await prisma.serviceRequest.findUnique({ where: { id } });
-  if (!sr) return notFound("ServiceRequest");
-  if (sr.clientId !== user.client.id) return forbidden("Not your request");
+  if (!sr) return notFound("Demande de service");
+  if (sr.clientId !== user.client.id) return forbidden("Cette demande ne vous appartient pas");
 
   const offers = await prisma.offer.findMany({
     where: { serviceRequestId: id },
@@ -36,15 +36,21 @@ export async function POST(
   if ("response" in result) return result.response;
   const { proposedPrice, message, slots } = result.data;
 
+  const serviceRequest = await prisma.serviceRequest.findUnique({ where: { id } });
+  if (!serviceRequest) return notFound("Demande de service");
+  if (serviceRequest.status !== "OPEN" && serviceRequest.status !== "NEGOTIATING") {
+    return conflict("La demande n'accepte plus d'offres");
+  }
+
   const notification = await prisma.notification.findFirst({
     where: { serviceRequestId: id, providerId: user.provider.id },
   });
-  if (!notification) return forbidden("Provider was not notified about this request");
+  if (!notification) return forbidden("Le prestataire n'a pas ete notifie pour cette demande");
 
   const existing = await prisma.offer.findUnique({
     where: { notificationId: notification.id },
   });
-  if (existing) return conflict("An offer already exists for this notification");
+  if (existing) return conflict("Une offre existe deja pour cette notification");
 
   const offer = await prisma.offer.create({
     data: {
@@ -62,10 +68,13 @@ export async function POST(
     where: { id: notification.id },
     data: { status: "RESPONDED" },
   });
-  await prisma.serviceRequest.update({
-    where: { id },
-    data: { status: "NEGOTIATING" },
-  });
+
+  if (serviceRequest.status === "OPEN") {
+    await prisma.serviceRequest.update({
+      where: { id },
+      data: { status: "NEGOTIATING" },
+    });
+  }
 
   return NextResponse.json(offer, { status: 201 });
 }

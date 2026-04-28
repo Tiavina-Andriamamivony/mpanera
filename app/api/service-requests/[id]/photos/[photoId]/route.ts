@@ -16,7 +16,7 @@ export async function DELETE(
     include: { serviceRequest: true },
   });
   if (!photo || photo.serviceRequestId !== id) return notFound("Photo");
-  if (photo.serviceRequest.clientId !== user.client.id) return forbidden("Not your request");
+  if (photo.serviceRequest.clientId !== user.client.id) return forbidden("Cette demande ne vous appartient pas");
 
   await prisma.serviceRequestPhoto.delete({ where: { id: photoId } });
   return new NextResponse(null, { status: 204 });

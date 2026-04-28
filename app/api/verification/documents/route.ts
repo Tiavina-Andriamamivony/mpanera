@@ -19,13 +19,13 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const user = await getAuthUser(req);
   if (!user) return unauthorized();
-  if (!user.provider) return forbidden("Caller is not a provider");
+  if (!user.provider) return forbidden("L'appelant n'est pas un prestataire");
 
   const form = await req.formData();
   const typeRaw = form.get("type");
   const file = form.get("file");
-  if (typeof typeRaw !== "string") return badRequest("Missing type");
-  if (!(file instanceof File)) return badRequest("Missing file");
+  if (typeof typeRaw !== "string") return badRequest("Type manquant");
+  if (!(file instanceof File)) return badRequest("Fichier manquant");
 
   const parsed = verificationDocTypeSchema.safeParse(typeRaw);
   if (!parsed.success) return zodErrorResponse(parsed.error);

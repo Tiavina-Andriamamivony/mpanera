@@ -12,13 +12,13 @@ export async function GET(req: Request) {
   if ("response" in result) return result.response;
   const { page, perPage, status, categoryId } = result.data;
 
-  let where: import("@/lib/generated/prisma/client").Prisma.ServiceRequestWhereInput = {};
+  const where: import("@/lib/generated/prisma/client").Prisma.ServiceRequestWhereInput = {};
   if (user.role === "CLIENT" && user.client) {
     where.clientId = user.client.id;
   } else if (user.role === "PROVIDER" && user.provider) {
     where.notifications = { some: { providerId: user.provider.id } };
   } else {
-    return forbidden("Onboarding not complete");
+    return forbidden("Onboarding non termine");
   }
   if (status) where.status = status;
   if (categoryId) where.categoryId = categoryId;
@@ -38,13 +38,38 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const user = await getAuthUser(req);
   if (!user) return unauthorized();
-  if (!user.client) return forbidden("Only clients can create service requests");
+  if (!user.client) return forbidden("Seuls les clients peuvent creer des demandes de service");
+  const clientId = user.client.id;
 
   const result = await parseJson(req, createServiceRequestSchema);
   if ("response" in result) return result.response;
 
-  const created = await prisma.serviceRequest.create({
-    data: { ...result.data, clientId: user.client.id, status: "OPEN" },
+  const providers = await prisma.provider.findMany({
+    where: {
+      verified: true,
+      user: { active: true },
+      categories: { some: { categoryId: result.data.categoryId } },
+      ...(result.data.district ? { district: result.data.district } : {}),
+    },
+    select: { id: true },
   });
+
+  const created = await prisma.$transaction(async (tx) => {
+    const serviceRequest = await tx.serviceRequest.create({
+      data: { ...result.data, clientId, status: "OPEN" },
+    });
+
+    if (providers.length > 0) {
+      await tx.notification.createMany({
+        data: providers.map((provider) => ({
+          serviceRequestId: serviceRequest.id,
+          providerId: provider.id,
+        })),
+      });
+    }
+
+    return serviceRequest;
+  });
+
   return NextResponse.json(created, { status: 201 });
 }

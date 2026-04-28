@@ -59,7 +59,7 @@ export default function ProviderProfilePage() {
         setReviews(reviewsResponse.data)
       } catch (err) {
         if (cancelled) return
-        setError(err instanceof Error ? err.message : "Failed to load provider profile.")
+        setError(err instanceof Error ? err.message : "Impossible de charger le profil du prestataire.")
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -77,7 +77,7 @@ export default function ProviderProfilePage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center px-6 py-12 text-sm text-muted-foreground">
-        Loading provider profile...
+        Chargement du profil du prestataire...
       </main>
     )
   }
@@ -86,7 +86,7 @@ export default function ProviderProfilePage() {
     return (
       <main className="flex min-h-screen items-center justify-center px-6 py-12">
         <div className="rounded-lg border border-dashed border-destructive/30 px-4 py-6 text-sm text-destructive">
-          {error || "Provider not found."}
+          {error || "Prestataire introuvable."}
         </div>
       </main>
     )
@@ -95,7 +95,7 @@ export default function ProviderProfilePage() {
   const location =
     [provider.neighborhood, provider.district, provider.city]
       .filter(Boolean)
-      .join(", ") || "Location not specified"
+      .join(", ") || "Localisation non renseignee"
 
   return (
     <div className="h-full overflow-y-auto">
@@ -104,10 +104,10 @@ export default function ProviderProfilePage() {
         title={provider.fullName}
         description=""
         actions={
-          <Button asChild variant="outline">
+            <Button asChild variant="outline">
             <Link href="/app/explorer">
               <ArrowLeft className="size-4" />
-              Back to explore
+              Retour a l&apos;exploration
             </Link>
           </Button>
         }
@@ -128,7 +128,7 @@ export default function ProviderProfilePage() {
                   {provider.verified ? (
                     <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-xs text-primary">
                       <BadgeCheck className="size-3.5" />
-                      Verified profile
+                      Profil verifie
                     </span>
                   ) : null}
                 </div>
@@ -138,7 +138,7 @@ export default function ProviderProfilePage() {
                   </p>
                 ) : null}
                 <p className="max-w-3xl text-sm leading-7 text-muted-foreground">
-                  {provider.bio || "No bio provided yet."}
+                  {provider.bio || "Aucune presentation n&apos;a encore ete ajoutee."}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {provider.categories.map((category) => (
@@ -163,7 +163,7 @@ export default function ProviderProfilePage() {
                   {provider.averageRating.toFixed(1)}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  average based on client reviews
+                  moyenne calculee a partir des avis clients
                 </p>
               </div>
               <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
@@ -174,16 +174,16 @@ export default function ProviderProfilePage() {
                 <p className="mt-2 text-2xl font-semibold">
                   {provider.completedJobsCount}
                 </p>
-                <p className="text-sm text-muted-foreground">completed jobs</p>
+                <p className="text-sm text-muted-foreground">missions terminees</p>
               </div>
               <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock3 className="size-4 text-primary" />
-                  Response time
+                  Delai de reponse
                 </div>
-                <p className="mt-2 text-lg font-semibold">Not available yet</p>
+                <p className="mt-2 text-lg font-semibold">Pas encore disponible</p>
                 <p className="text-sm text-muted-foreground">
-                  average observed response time
+                  delai moyen de reponse observe
                 </p>
               </div>
             </div>
@@ -191,8 +191,8 @@ export default function ProviderProfilePage() {
 
           <Surface className="space-y-4">
             <SectionTitle
-              title="Practical information"
-              description="The details shown before any contact is made."
+              title="Informations pratiques"
+              description="Les details affiches avant toute prise de contact."
             />
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-2 text-muted-foreground">
@@ -201,14 +201,14 @@ export default function ProviderProfilePage() {
               </div>
               <div className="rounded-xl border border-border/70 px-4 py-4">
                 <p className="text-xs tracking-[0.18em] text-muted-foreground uppercase">
-                  Indicative pricing
+                  Tarif indicatif
                 </p>
                 <p className="mt-2 font-medium text-foreground">
-                  Not available yet
+                  Pas encore disponible
                 </p>
               </div>
               <Button asChild className="w-full">
-                <Link href="/app/requests">Send a request</Link>
+                <Link href="/app/requests">Envoyer une demande</Link>
               </Button>
             </div>
           </Surface>
@@ -216,8 +216,8 @@ export default function ProviderProfilePage() {
 
         <Surface className="space-y-4">
           <SectionTitle
-            title="Client reviews"
-            description="The provider's public score is fed by these ratings."
+            title="Avis clients"
+            description="La note publique du prestataire est alimentee par ces evaluations."
           />
           <div className="grid gap-3 lg:grid-cols-2">
             {reviews.map((review) => (
@@ -226,7 +226,7 @@ export default function ProviderProfilePage() {
                 className="rounded-xl border border-border/70 px-4 py-4"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-medium">Client review</p>
+                  <p className="font-medium">Avis client</p>
                   <span className="text-sm text-primary">
                     {"★".repeat(review.rating)}
                   </span>
@@ -235,7 +235,7 @@ export default function ProviderProfilePage() {
                   {review.comment}
                 </p>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  {new Intl.DateTimeFormat("en-US", {
+                  {new Intl.DateTimeFormat("fr-FR", {
                     dateStyle: "medium",
                   }).format(new Date(review.createdAt))}
                 </p>
@@ -243,7 +243,7 @@ export default function ProviderProfilePage() {
             ))}
             {reviews.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
-                No reviews yet.
+                Aucun avis pour le moment.
               </div>
             ) : null}
           </div>

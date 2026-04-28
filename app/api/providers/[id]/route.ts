@@ -14,7 +14,7 @@ export async function GET(
       reviews: { where: { published: true }, orderBy: { createdAt: "desc" } },
     },
   });
-  if (!provider) return notFound("Provider");
+  if (!provider) return notFound("Prestataire");
   return NextResponse.json({
     ...provider,
     categories: provider.categories.map((pc) => pc.category),

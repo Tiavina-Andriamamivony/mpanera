@@ -7,7 +7,7 @@ import { notificationListSchema } from "@/lib/validation";
 export async function GET(req: Request) {
   const user = await getAuthUser(req);
   if (!user) return unauthorized();
-  if (!user.provider) return forbidden("Caller is not a provider");
+  if (!user.provider) return forbidden("L'appelant n'est pas un prestataire");
 
   const result = parseQuery(new URL(req.url), notificationListSchema);
   if ("response" in result) return result.response;

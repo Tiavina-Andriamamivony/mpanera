@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     where: email ? { email } : { phone: phone! },
   });
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
-    return errorResponse(401, "INVALID_CREDENTIALS", "Invalid email/phone or password");
+    return errorResponse(401, "INVALID_CREDENTIALS", "Email/telephone ou mot de passe invalide");
   }
 
   await prisma.user.update({

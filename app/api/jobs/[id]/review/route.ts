@@ -13,10 +13,10 @@ export async function POST(
   const { id } = await params;
 
   const job = await prisma.job.findUnique({ where: { id }, include: { review: true } });
-  if (!job) return notFound("Job");
-  if (job.clientId !== user.client.id) return forbidden("Not your job");
-  if (job.status !== "COMPLETED") return conflict("Can only review completed jobs");
-  if (job.review) return conflict("Job already has a review");
+  if (!job) return notFound("Mission");
+  if (job.clientId !== user.client.id) return forbidden("Cette mission ne vous appartient pas");
+  if (job.status !== "COMPLETED") return conflict("Seules les missions terminees peuvent etre evaluees");
+  if (job.review) return conflict("Cette mission possede deja un avis");
 
   const result = await parseJson(req, createReviewSchema);
   if ("response" in result) return result.response;

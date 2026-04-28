@@ -12,9 +12,9 @@ export async function POST(
   const { id } = await params;
 
   const offer = await prisma.offer.findUnique({ where: { id } });
-  if (!offer) return notFound("Offer");
-  if (offer.providerId !== user.provider.id) return forbidden("Not your offer");
-  if (offer.status !== "PENDING") return conflict("Offer is not pending");
+  if (!offer) return notFound("Offre");
+  if (offer.providerId !== user.provider.id) return forbidden("Cette offre ne vous appartient pas");
+  if (offer.status !== "PENDING") return conflict("L'offre n'est pas en attente");
 
   const updated = await prisma.offer.update({
     where: { id },

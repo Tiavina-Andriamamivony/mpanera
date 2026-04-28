@@ -14,10 +14,10 @@ export async function POST(
   const { id } = await params;
 
   const job = await prisma.job.findUnique({ where: { id }, include: { payment: true } });
-  if (!job) return notFound("Job");
-  if (job.clientId !== user.client.id) return forbidden("Not your job");
+  if (!job) return notFound("Mission");
+  if (job.clientId !== user.client.id) return forbidden("Cette mission ne vous appartient pas");
   if (job.payment && job.payment.status !== "FAILED") {
-    return conflict("Job already has an active payment");
+    return conflict("Cette mission possede deja un paiement actif");
   }
 
   const result = await parseJson(req, createPaymentSchema);
@@ -41,7 +41,7 @@ export async function POST(
   const instructions =
     method === "CARD"
       ? null
-      : `Confirm the payment on your ${method.toLowerCase().replace("_", " ")} app with reference ${apiReference}.`;
+      : `Confirmez le paiement dans votre application ${method.toLowerCase().replace("_", " ")} avec la reference ${apiReference}.`;
   const redirectUrl = method === "CARD" ? `/checkout/${payment.id}` : null;
 
   return NextResponse.json({ ...payment, instructions, redirectUrl }, { status: 201 });

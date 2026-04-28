@@ -22,11 +22,11 @@ export async function GET(
       review: true,
     },
   });
-  if (!job) return notFound("Job");
+  if (!job) return notFound("Mission");
   const allowed =
     (user.client && job.clientId === user.client.id) ||
     (user.provider && job.providerId === user.provider.id);
-  if (!allowed) return forbidden("Not part of this job");
+  if (!allowed) return forbidden("Vous ne faites pas partie de cette mission");
 
   return NextResponse.json(job);
 }

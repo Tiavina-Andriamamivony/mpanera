@@ -36,7 +36,7 @@ import { Button } from "../ui/button"
 const mainNav = [
   { title: "Explorer", url: "/app/explorer", icon: Compass },
   {
-    title: "Requests",
+    title: "Demandes",
     url: "/app/requests",
     icon: BriefcaseBusiness,
     badge: "4",
@@ -46,12 +46,12 @@ const mainNav = [
 
 const secondaryNav = [
   { title: "Notifications", url: "/app/notifications", icon: Bell },
-  { title: "Reviews", url: "/app/avis", icon: Star },
+  { title: "Avis", url: "/app/avis", icon: Star },
 ]
 
 const utilityNav = [
   { title: "Support", url: "/app/support", icon: LifeBuoy },
-  { title: "Settings", url: "/app/parametres", icon: Settings },
+  { title: "Parametres", url: "/app/parametres", icon: Settings },
 ]
 
 export function AppSidebar() {
@@ -82,7 +82,7 @@ export function AppSidebar() {
             <div className="flex min-w-0 flex-col">
               <Logo />
               <span className="text-xs text-sidebar-foreground/70">
-                Local services
+                Services locaux
               </span>
             </div>
           ) : null}
@@ -136,7 +136,7 @@ export function AppSidebar() {
         <SidebarSeparator />
 
         <SidebarGroup>
-          <SidebarGroupLabel>Tracking</SidebarGroupLabel>
+          <SidebarGroupLabel>Suivi</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {secondaryNav.map((item) => (
@@ -161,12 +161,12 @@ export function AppSidebar() {
           <>
             <SidebarSeparator />
             <SidebarGroup>
-              <SidebarGroupLabel>Quick actions</SidebarGroupLabel>
+              <SidebarGroupLabel>Actions rapides</SidebarGroupLabel>
               <SidebarGroupContent>
                 <div className="flex flex-col gap-2 px-2">
                   <Button type="button" className="flex items-center">
                     <Plus className="size-4" />
-                    New request
+                    Nouvelle demande
                   </Button>
                   {/* <div className="rounded-xl border border-sidebar-border bg-background/60 px-3 py-3">
                     <p className="text-sm font-medium text-sidebar-foreground">

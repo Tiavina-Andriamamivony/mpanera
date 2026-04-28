@@ -1,4 +1,4 @@
-import { MessageSquare, Paperclip, Phone, Search, Send } from "lucide-react"
+import { Search } from "lucide-react"
 
 import {
   ActionLink,
@@ -17,18 +17,18 @@ import {
 const threads = [
   {
     name: "Felana Rakoto",
-    preview: "I can stop by this afternoon around 3 PM.",
-    state: "Online",
+    preview: "Je peux passer cet apres-midi vers 15 h.",
+    state: "En ligne",
   },
   {
     name: "Tovo Care",
-    preview: "Can you confirm your exact neighborhood?",
-    state: "Pending",
+    preview: "Pouvez-vous confirmer votre quartier exact ?",
+    state: "En attente",
   },
   {
     name: "Mamy Tech",
-    preview: "Thanks for the photo, I am preparing an estimate.",
-    state: "Recent archive",
+    preview: "Merci pour la photo, je prepare un devis.",
+    state: "Archive recente",
   },
 ]
 
@@ -37,11 +37,11 @@ export default function MessagesPage() {
     <div className="h-full overflow-y-auto">
       <PageIntro
         eyebrow="Messages"
-        title="Chat with a provider once a request is accepted."
-        description="Messaging helps the user refine the need, confirm a visit, and keep a clear record of important exchanges."
+        title="Discutez avec un prestataire une fois la demande acceptee."
+        description="La messagerie aide l'utilisateur a preciser le besoin, confirmer une visite et garder une trace claire des echanges importants."
         actions={
           <>
-            <ActionLink href="/app/requests">View requests</ActionLink>
+            <ActionLink href="/app/requests">Voir les demandes</ActionLink>
           </>
         }
       />
@@ -51,7 +51,7 @@ export default function MessagesPage() {
           <Surface className="mx-auto max-w-2xl space-y-4">
             <SectionTitle
               title="Conversations"
-              description="List of active or recent discussions."
+              description="Liste des discussions actives ou recentes."
             />
             <InputGroup>
               <InputGroupAddon>
@@ -59,7 +59,7 @@ export default function MessagesPage() {
               </InputGroupAddon>
               <InputGroupInput
                 size={10}
-                placeholder="Search for a provider or keyword"
+                placeholder="Rechercher un prestataire ou un mot-cle"
               />
             </InputGroup>
 

@@ -13,7 +13,7 @@ export async function PATCH(
 
   const notification = await prisma.notification.findUnique({ where: { id } });
   if (!notification) return notFound("Notification");
-  if (notification.providerId !== user.provider.id) return forbidden("Not your notification");
+  if (notification.providerId !== user.provider.id) return forbidden("Cette notification ne vous appartient pas");
 
   const updated = await prisma.notification.update({
     where: { id },

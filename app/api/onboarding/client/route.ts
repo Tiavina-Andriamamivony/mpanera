@@ -7,8 +7,8 @@ import { completeClientSchema } from "@/lib/validation";
 export async function POST(req: Request) {
   const user = await getAuthUser(req);
   if (!user) return unauthorized();
-  if (user.role !== "CLIENT") return forbidden("Only CLIENT users can complete client onboarding");
-  if (user.client) return conflict("Client profile already exists");
+  if (user.role !== "CLIENT") return forbidden("Seuls les utilisateurs CLIENT peuvent terminer l'onboarding client");
+  if (user.client) return conflict("Le profil client existe deja");
 
   const result = await parseJson(req, completeClientSchema);
   if ("response" in result) return result.response;

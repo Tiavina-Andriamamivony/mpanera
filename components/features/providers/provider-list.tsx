@@ -42,7 +42,7 @@ export function ProviderList({
   providers,
   selectedProviderIds = [],
   onToggleProvider,
-  emptyMessage = "No providers match this search yet.",
+  emptyMessage = "Aucun prestataire ne correspond encore a cette recherche.",
 }: ProviderListProps) {
   if (providers.length === 0) {
     return (
@@ -58,7 +58,7 @@ export function ProviderList({
         const isSelected = selectedProviderIds.includes(provider.id)
         const location =
           [provider.neighborhood, provider.city].filter(Boolean).join(", ") ||
-          "Location not specified"
+          "Localisation non renseignee"
 
         return (
           <article
@@ -78,7 +78,7 @@ export function ProviderList({
                     {provider.verified ? (
                       <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[11px] text-primary">
                         <BadgeCheck className="size-3.5" />
-                        Verified
+                        Verifie
                       </span>
                     ) : null}
                   </div>
@@ -88,7 +88,7 @@ export function ProviderList({
                     </p>
                   ) : null}
                   <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                    {provider.bio || "No bio provided yet."}
+                    {provider.bio || "Aucune presentation n'a encore ete ajoutee."}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {provider.categories.map((category) => (
@@ -110,11 +110,11 @@ export function ProviderList({
                   <span className="font-medium text-foreground">
                     {provider.averageRating.toFixed(1)}
                   </span>
-                  <span>out of 5</span>
+                  <span>sur 5</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <BriefcaseBusiness className="size-4" />
-                  <span>{provider.completedJobsCount} completed jobs</span>
+                  <span>{provider.completedJobsCount} missions terminees</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -124,18 +124,18 @@ export function ProviderList({
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock3 className="size-4" />
-                  <span>{provider.responseTime || "Response time not available"}</span>
+                  <span>{provider.responseTime || "Delai de reponse indisponible"}</span>
                 </div>
               </div>
             </div>
 
             <div className="mt-4 flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-muted-foreground">
-                {provider.indicativePrice || "Indicative pricing not available"}
+                {provider.indicativePrice || "Tarif indicatif indisponible"}
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button asChild variant="outline">
-                  <Link href={`/prestataires/${provider.id}`}>View profile</Link>
+                  <Link href={`/prestataires/${provider.id}`}>Voir le profil</Link>
                 </Button>
                 {onToggleProvider ? (
                   <Button
@@ -146,7 +146,7 @@ export function ProviderList({
                     )}
                     onClick={() => onToggleProvider(provider.id)}
                   >
-                    {isSelected ? "Selected" : "Select"}
+                    {isSelected ? "Selectionne" : "Selectionner"}
                   </Button>
                 ) : null}
               </div>

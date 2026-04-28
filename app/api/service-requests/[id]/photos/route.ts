@@ -13,12 +13,12 @@ export async function POST(
   const { id } = await params;
 
   const sr = await prisma.serviceRequest.findUnique({ where: { id } });
-  if (!sr) return notFound("ServiceRequest");
-  if (sr.clientId !== user.client.id) return forbidden("Not your request");
+  if (!sr) return notFound("Demande de service");
+  if (sr.clientId !== user.client.id) return forbidden("Cette demande ne vous appartient pas");
 
   const form = await req.formData();
   const file = form.get("file");
-  if (!(file instanceof File)) return badRequest("Missing file");
+  if (!(file instanceof File)) return badRequest("Fichier manquant");
   const orderRaw = form.get("order");
   const order = typeof orderRaw === "string" ? Number.parseInt(orderRaw, 10) : 0;
 

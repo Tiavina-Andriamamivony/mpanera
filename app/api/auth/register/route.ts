@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const existing = await prisma.user.findFirst({
     where: { OR: [{ email }, { phone }] },
   });
-  if (existing) return conflict("Email or phone already in use");
+  if (existing) return conflict("Cette adresse email ou ce numero de telephone est deja utilise");
 
   const user = await prisma.user.create({
     data: { email, phone, role, passwordHash: await hashPassword(password) },

@@ -12,10 +12,10 @@ export async function GET(req: Request) {
   if ("response" in result) return result.response;
   const { page, perPage, status } = result.data;
 
-  let where: import("@/lib/generated/prisma/client").Prisma.JobWhereInput = {};
+  const where: import("@/lib/generated/prisma/client").Prisma.JobWhereInput = {};
   if (user.client) where.clientId = user.client.id;
   else if (user.provider) where.providerId = user.provider.id;
-  else return forbidden("Onboarding not complete");
+  else return forbidden("Onboarding non termine");
   if (status) where.status = status;
 
   const [data, total] = await Promise.all([

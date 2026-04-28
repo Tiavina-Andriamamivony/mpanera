@@ -15,7 +15,7 @@ export async function GET(
     where: { id },
     include: { provider: true, proposedSlots: true },
   });
-  if (!offer) return notFound("Offer");
+  if (!offer) return notFound("Offre");
   return NextResponse.json(offer);
 }
 
@@ -28,9 +28,9 @@ export async function PATCH(
   const { id } = await params;
 
   const offer = await prisma.offer.findUnique({ where: { id } });
-  if (!offer) return notFound("Offer");
-  if (offer.providerId !== user.provider.id) return forbidden("Not your offer");
-  if (offer.status !== "PENDING") return conflict("Offer can only be edited while PENDING");
+  if (!offer) return notFound("Offre");
+  if (offer.providerId !== user.provider.id) return forbidden("Cette offre ne vous appartient pas");
+  if (offer.status !== "PENDING") return conflict("L'offre ne peut etre modifiee que lorsqu'elle est en attente");
 
   const result = await parseJson(req, updateOfferSchema);
   if ("response" in result) return result.response;

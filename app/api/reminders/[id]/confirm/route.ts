@@ -12,9 +12,9 @@ export async function POST(
   const { id } = await params;
 
   const reminder = await prisma.updateReminder.findUnique({ where: { id } });
-  if (!reminder) return notFound("Reminder");
-  if (reminder.providerId !== user.provider.id) return forbidden("Not your reminder");
-  if (reminder.status !== "SENT") return conflict("Reminder is not pending");
+  if (!reminder) return notFound("Rappel");
+  if (reminder.providerId !== user.provider.id) return forbidden("Ce rappel ne vous appartient pas");
+  if (reminder.status !== "SENT") return conflict("Le rappel n'est pas en attente");
 
   const now = new Date();
   const next = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 30); // 30 days

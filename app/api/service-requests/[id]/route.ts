@@ -17,10 +17,23 @@ export async function GET(
       client: true,
       category: true,
       photos: { orderBy: { order: "asc" } },
-      offers: true,
+      offers: user.client
+        ? true
+        : user.provider
+          ? { where: { providerId: user.provider.id } }
+          : false,
     },
   });
-  if (!sr) return notFound("ServiceRequest");
+  if (!sr) return notFound("Demande de service");
+
+  const allowed =
+    (user.client && sr.clientId === user.client.id) ||
+    (user.provider &&
+      (await prisma.notification.count({
+        where: { serviceRequestId: id, providerId: user.provider.id },
+      })) > 0);
+  if (!allowed) return forbidden("Vous n'etes pas autorise a consulter cette demande");
+
   return NextResponse.json(sr);
 }
 
@@ -33,9 +46,9 @@ export async function PATCH(
   const { id } = await params;
 
   const sr = await prisma.serviceRequest.findUnique({ where: { id } });
-  if (!sr) return notFound("ServiceRequest");
-  if (sr.clientId !== user.client.id) return forbidden("Not your request");
-  if (sr.status !== "OPEN") return conflict("Request can only be edited while OPEN");
+  if (!sr) return notFound("Demande de service");
+  if (sr.clientId !== user.client.id) return forbidden("Cette demande ne vous appartient pas");
+  if (sr.status !== "OPEN") return conflict("La demande ne peut etre modifiee que lorsqu'elle est OUVERTE");
 
   const result = await parseJson(req, updateServiceRequestSchema);
   if ("response" in result) return result.response;
@@ -55,8 +68,8 @@ export async function DELETE(
   if (!user || !user.client) return unauthorized();
   const { id } = await params;
   const sr = await prisma.serviceRequest.findUnique({ where: { id } });
-  if (!sr) return notFound("ServiceRequest");
-  if (sr.clientId !== user.client.id) return forbidden("Not your request");
+  if (!sr) return notFound("Demande de service");
+  if (sr.clientId !== user.client.id) return forbidden("Cette demande ne vous appartient pas");
 
   await prisma.serviceRequest.update({ where: { id }, data: { status: "CLOSED" } });
   return new NextResponse(null, { status: 204 });

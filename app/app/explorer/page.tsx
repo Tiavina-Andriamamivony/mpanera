@@ -1,7 +1,7 @@
 "use client"
 
 import { useDeferredValue, useEffect, useMemo, useState } from "react"
-import { Loader, Loader2, MapPin, Search, Users } from "lucide-react"
+import { Loader, MapPin, Search, Users } from "lucide-react"
 
 import {
   ActionLink,
@@ -96,7 +96,7 @@ export default function ExplorerPage() {
         setError(
           err instanceof Error
             ? err.message
-            : "Failed to load marketplace data."
+            : "Impossible de charger les donnees du marketplace."
         )
       } finally {
         if (!cancelled) setLoading(false)
@@ -138,17 +138,17 @@ export default function ExplorerPage() {
     <div className="h-full overflow-y-auto">
       <PageIntro
         eyebrow=""
-        title="Find a provider for your need."
+        title="Trouvez un prestataire pour votre besoin."
         description=""
-        actions={<ActionLink href="/app/requests">New request</ActionLink>}
+        actions={<ActionLink href="/app/requests">Nouvelle demande</ActionLink>}
       />
 
       <PageBody className="space-y-8">
         <div className="grid gap-4 xl:grid-cols-[1.5fr_0.9fr]">
           <Surface className="space-y-6">
             <SectionTitle
-              title="Quick search"
-              description="Filter profiles by need, area, and specialty before sending a request."
+              title="Recherche rapide"
+              description="Filtrez les profils par besoin, zone et specialite avant d&apos;envoyer une demande."
             />
             <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_auto]">
               <InputGroup>
@@ -158,7 +158,7 @@ export default function ExplorerPage() {
                 <InputGroupInput
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="What service do you need?"
+                  placeholder="De quel service avez-vous besoin ?"
                 />
               </InputGroup>
               <InputGroup>
@@ -168,7 +168,7 @@ export default function ExplorerPage() {
                 <InputGroupInput
                   value={district}
                   onChange={(event) => setDistrict(event.target.value)}
-                  placeholder="Neighborhood or district"
+                  placeholder="Quartier ou district"
                 />
               </InputGroup>
               <Button
@@ -180,7 +180,7 @@ export default function ExplorerPage() {
                   setActiveCategoryId(null)
                 }}
               >
-                Reset
+                Reinitialiser
               </Button>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -190,7 +190,7 @@ export default function ExplorerPage() {
                 variant={activeCategoryId === null ? "default" : "outline"}
                 onClick={() => setActiveCategoryId(null)}
               >
-                All
+                Tous
               </Button>
               {availableCategories.map((category) => (
                 <Button
@@ -214,16 +214,16 @@ export default function ExplorerPage() {
 
           <Surface className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
             <MiniStat
-              label="Visible providers"
+              label="Prestataires visibles"
               value={loading ? "..." : String(filteredProviders.length)}
               hint={
                 error
-                  ? "Unable to load provider data right now."
-                  : "Profiles matching the active filters."
+                  ? "Impossible de charger les donnees des prestataires pour le moment."
+                  : "Profils correspondant aux filtres actifs."
               }
             />
             <MiniStat
-              label="Average"
+              label="Moyenne"
               value={
                 filteredProviders.length === 0
                   ? "0.0"
@@ -234,14 +234,14 @@ export default function ExplorerPage() {
                       ) / filteredProviders.length
                     ).toFixed(1)
               }
-              hint="Average rating across the visible profiles."
+              hint="Note moyenne sur les profils visibles."
             />
             <MiniStat
-              label="Verified"
+              label="Verifies"
               value={String(
                 filteredProviders.filter((provider) => provider.verified).length
               )}
-              hint="Profiles that already have verified status."
+              hint="Profils deja verifies."
             />
           </Surface>
         </div>
@@ -249,19 +249,19 @@ export default function ExplorerPage() {
         <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
           <Surface className="space-y-4">
             <SectionTitle
-              title="Provider profiles"
-              description="Each public profile can be reviewed before sending a request."
+              title="Profils prestataires"
+              description="Chaque profil public peut etre consulte avant l'envoi d'une demande."
             />
             {error ? (
               <div className="rounded-lg border border-dashed border-destructive/30 px-4 py-8 text-sm text-destructive">
                 <div className="flex flex-col items-center gap-2">
                   <Loader className="animate-spin" />
-                  <span className="text-desctructive">Error</span>
+                  <span className="text-desctructive">Veuillez patienter...</span>
                 </div>
               </div>
             ) : loading ? (
               <div className="rounded-lg border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
-                Loading providers...
+                Chargement des prestataires...
               </div>
             ) : (
               <ProviderList providers={filteredProviders} />
@@ -270,28 +270,28 @@ export default function ExplorerPage() {
 
           <Surface className="space-y-5">
             <SectionTitle
-              title="MVP flow"
-              description="This flow covers the free-browse experience described in the README."
+              title="Parcours MVP"
+              description="Ce parcours couvre l'experience de navigation libre decrite dans le README."
             />
             <div className="space-y-4 text-sm leading-6 text-muted-foreground">
               <div className="flex items-start gap-3">
                 <Users className="mt-1 size-4 text-primary" />
-                <p>browse public profiles without needing to sign in</p>
+                <p>parcourir les profils publics sans devoir se connecter</p>
               </div>
               <div className="flex items-start gap-3">
                 <Users className="mt-1 size-4 text-primary" />
-                <p>compare ratings, service area, and indicative pricing</p>
+                <p>comparer les notes, la zone d&apos;intervention et les tarifs indicatifs</p>
               </div>
               <div className="flex items-start gap-3">
                 <Users className="mt-1 size-4 text-primary" />
                 <p>
-                  move to the requests page to contact one or several providers
+                  passer a la page des demandes pour contacter un ou plusieurs prestataires
                 </p>
               </div>
             </div>
             <div className="rounded-lg border border-dashed border-border px-4 py-4 text-sm text-muted-foreground">
-              Advanced filters from the README such as real distance or dynamic
-              sorting can later plug into `providersService.search`.
+              Les filtres avances du README, comme la distance reelle ou le tri
+              dynamique, pourront ensuite se brancher sur `providersService.search`.
             </div>
           </Surface>
         </div>

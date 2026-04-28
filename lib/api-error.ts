@@ -13,10 +13,10 @@ export function errorResponse(
   return NextResponse.json(body, { status });
 }
 
-export const unauthorized = () => errorResponse(401, "UNAUTHORIZED", "Missing or invalid token");
-export const forbidden = (message = "Not allowed") => errorResponse(403, "FORBIDDEN", message);
-export const notFound = (resource = "Resource") =>
-  errorResponse(404, "NOT_FOUND", `${resource} not found`);
+export const unauthorized = () => errorResponse(401, "UNAUTHORIZED", "Jeton manquant ou invalide");
+export const forbidden = (message = "Action non autorisee") => errorResponse(403, "FORBIDDEN", message);
+export const notFound = (resource = "Ressource") =>
+  errorResponse(404, "NOT_FOUND", `${resource} introuvable`);
 export const conflict = (message: string) => errorResponse(409, "CONFLICT", message);
 export const badRequest = (message: string) => errorResponse(400, "BAD_REQUEST", message);
 
@@ -26,7 +26,7 @@ export function zodErrorResponse(err: ZodError) {
     const key = issue.path.join(".") || "_root";
     (fields[key] ??= []).push(issue.message);
   }
-  return errorResponse(422, "VALIDATION_ERROR", "Validation failed", fields);
+  return errorResponse(422, "VALIDATION_ERROR", "La validation a echoue", fields);
 }
 
 export async function parseJson<T>(
@@ -37,7 +37,7 @@ export async function parseJson<T>(
   try {
     raw = await req.json();
   } catch {
-    return { response: badRequest("Invalid JSON") };
+    return { response: badRequest("JSON invalide") };
   }
   const parsed = schema.safeParse(raw);
   if (!parsed.success) return { response: zodErrorResponse(parsed.error) };

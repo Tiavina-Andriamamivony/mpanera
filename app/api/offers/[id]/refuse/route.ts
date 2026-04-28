@@ -15,9 +15,9 @@ export async function POST(
     where: { id },
     include: { serviceRequest: true },
   });
-  if (!offer) return notFound("Offer");
-  if (offer.serviceRequest.clientId !== user.client.id) return forbidden("Not your request");
-  if (offer.status !== "PENDING") return conflict("Offer is not pending");
+  if (!offer) return notFound("Offre");
+  if (offer.serviceRequest.clientId !== user.client.id) return forbidden("Cette demande ne vous appartient pas");
+  if (offer.status !== "PENDING") return conflict("L'offre n'est pas en attente");
 
   const updated = await prisma.offer.update({
     where: { id },

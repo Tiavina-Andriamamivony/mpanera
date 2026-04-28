@@ -8,23 +8,23 @@ Mpanera est une Plateforme qui donne un cadre, une visibilité et une réputatio
 
 ## Pourquoi ce projet ?
 
-95 % de l'emploi à Madagascar est informel et fragmenté *(Banque africaine de développement, 2025)*. Ces travailleurs ont des compétences réelles mais aucun cadre pour les valoriser : pas de visibilité, pas de réputation portable, pas de moyen d'être trouvé en dehors de son quartier. Mpanera est le chaînon manquant.
+95 % de l'emploi à Madagascar est informel et fragmenté _(Banque africaine de développement, 2025)_. Ces travailleurs ont des compétences réelles mais aucun cadre pour les valoriser : pas de visibilité, pas de réputation portable, pas de moyen d'être trouvé en dehors de son quartier. Mpanera est le chaînon manquant.
 
 ---
 
 ## Stack technique
 
-| Couche | Technologie |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| Langage | TypeScript |
-| ORM | Prisma |
-| Authentification | Clerk (Google + Facebook OAuth) |
-| Messagerie temps réel | WebSocket (Pusher ou Ably) |
-| UI | shadcn/ui + Tailwind CSS v4 |
-| Icônes | Lucide React |
-| Déploiement | Vercel |
-| Package manager | pnpm |
+| Couche                | Technologie                     |
+| --------------------- | ------------------------------- |
+| Framework             | Next.js 16 (App Router)         |
+| Langage               | TypeScript                      |
+| ORM                   | Prisma                          |
+| Authentification      | Clerk (Google + Facebook OAuth) |
+| Messagerie temps réel | WebSocket (Pusher ou Ably)      |
+| UI                    | shadcn/ui + Tailwind CSS v4     |
+| Icônes                | Lucide React                    |
+| Déploiement           | Vercel                          |
+| Package manager       | pnpm                            |
 
 > **Pourquoi Pusher/Ably et pas un serveur WebSocket maison ?** Vercel déploie des fonctions serverless qui ne maintiennent pas de connexions persistantes. Un service WebSocket managé (Pusher ou Ably) s'intègre nativement à cette contrainte sans infrastructure supplémentaire.
 
@@ -52,11 +52,10 @@ Mpanera est une Plateforme qui donne un cadre, une visibilité et une réputatio
 
 ### Demandes de prestation
 
-- Envoi d'une demande à un ou plusieurs prestataires simultanément
+- Envoi d'une demande à un ou plusieurs prestataires simultanément, le client ne choisit pas le prestataire, il n'a qu'a diffuser sa demande
 - Notification push au prestataire à la réception d'une demande
 - Le prestataire accepte ou refuse la demande
-- Si accepté : mise en contact directe via notification 
-
+- Si accepté : mise en contact directe via notification
 
 ### Évaluation
 
@@ -188,15 +187,15 @@ L'application est accessible sur [http://localhost:3000](http://localhost:3000).
 
 ## Scripts disponibles
 
-| Commande | Description |
-|---|---|
-| `pnpm dev` | Serveur de développement (Turbopack) |
-| `pnpm build` | Build de production |
-| `pnpm start` | Serveur de production |
-| `pnpm lint` | Vérification ESLint |
-| `pnpm format` | Formatage Prettier |
-| `pnpm typecheck` | Vérification TypeScript |
-| `pnpm prisma studio` | Interface visuelle de la base de données |
+| Commande                  | Description                               |
+| ------------------------- | ----------------------------------------- |
+| `pnpm dev`                | Serveur de développement (Turbopack)      |
+| `pnpm build`              | Build de production                       |
+| `pnpm start`              | Serveur de production                     |
+| `pnpm lint`               | Vérification ESLint                       |
+| `pnpm format`             | Formatage Prettier                        |
+| `pnpm typecheck`          | Vérification TypeScript                   |
+| `pnpm prisma studio`      | Interface visuelle de la base de données  |
 | `pnpm prisma migrate dev` | Appliquer les migrations en développement |
 
 ---
@@ -277,7 +276,6 @@ Lors de la première connexion, le webhook Clerk déclenche la création de l'ut
 
 ---
 
-
 **Abonnement côté client :**
 
 ```ts
@@ -309,11 +307,11 @@ Accueil
   ├── [Formulaire de besoin] ──→ Liste prestataires (triée par note + distance)
   │                                   └── Demande envoyée
   │                                         └── Prestataire notifié
-  │                                               ├── Accepte → Mise en contact -> envoi offre (prestataire) -> comparaison prix (client) -> payment frais de contact -> reçoit le contact du prestataire 
+  │                                               ├── Accepte → Mise en contact -> envoi offre (prestataire) -> comparaison prix (client) -> payment frais de contact -> reçoit le contact du prestataire
   │                                               └── Refuse  → Prochain prestataire
   │                                                               └── Prestation réalisée
   │                                                                     └── Évaluation → Feed mis à jour
-  └── [Parcours découverte] ──→ Profils en navigation libre 
+  └── [Parcours découverte] ──→ Profils en navigation libre
 ```
 
 ---
@@ -334,4 +332,4 @@ Accueil
 
 ---
 
-*Mpanera — donne un cadre à ceux qui ont le talent.*
+_Mpanera — donne un cadre à ceux qui ont le talent._

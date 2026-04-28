@@ -58,7 +58,7 @@ export function Surface({
   return (
     <section
       className={cn(
-        "rounded-lg border border-border/70 bg-background/80 p-5 transition-colors duration-200 hover:bg-accent/20",
+        "rounded-lg border border-border/70 bg-background/80 p-5 transition-colors duration-200",
         className
       )}
     >

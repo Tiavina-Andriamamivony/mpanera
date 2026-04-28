@@ -7,7 +7,7 @@ export const HeaderSearchBar = () => {
       <InputGroupAddon align="inline-start">
         <Search />
       </InputGroupAddon>
-      <InputGroupInput placeholder="Search provider..." />
+      <InputGroupInput placeholder="Rechercher un prestataire..." />
     </InputGroup>
   )
 }
