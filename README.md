@@ -326,6 +326,13 @@ Accueil
 
 ---
 
+## Rôles de chacun
+Tiavina: devOps
+Ando Mamy: backend
+Dieu Donné: frontend
+Kyle: dev mobile
+Mihago: documentation
+
 ## Auteur
 
 **Tiavina-Andriamamivony** — [github.com/Tiavina-Andriamamivony](https://github.com/Tiavina-Andriamamivony)
